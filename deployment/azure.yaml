@@ -1,0 +1,113 @@
+# ---------------------------------------------------------------------------
+# azure.yaml — Azure Container Apps deployment manifest
+# ---------------------------------------------------------------------------
+# Deploy with:
+#   az containerapp create --yaml deployment/azure.yaml
+#
+# Prerequisites:
+#   - Azure Container Registry (ACR) with the image pushed
+#   - Azure Container Apps Environment already provisioned
+#   - Azure Key Vault with required secrets
+#   - Managed Identity attached to the Container App
+# ---------------------------------------------------------------------------
+
+name: payroll-mapping-engine
+
+resourceGroup: rg-payroll-mapper
+location: eastus
+
+containerApp:
+  name: payroll-mapping-engine
+  environmentName: cae-payroll-prod
+
+  # --------------------------------------------------------------------------
+  # Ingress (internal — not exposed to the public internet)
+  # --------------------------------------------------------------------------
+  ingress:
+    external: false          # internal-only; expose via APIM or private endpoint
+    targetPort: 8000
+    transport: http
+    allowInsecure: false
+
+  # --------------------------------------------------------------------------
+  # Scaling
+  # --------------------------------------------------------------------------
+  scale:
+    minReplicas: 1
+    maxReplicas: 5
+    rules:
+      - name: http-scaling
+        http:
+          metadata:
+            concurrentRequests: "20"
+
+  # --------------------------------------------------------------------------
+  # Container definition
+  # --------------------------------------------------------------------------
+  containers:
+    - name: payroll-mapper
+      image: <acr-name>.azurecr.io/payroll-mapping-engine:latest
+      resources:
+        cpu: 0.5
+        memory: 1Gi
+
+      # Runtime environment variables
+      # Secrets are injected from Azure Key Vault via secretRef
+      env:
+        - name: ENVIRONMENT
+          value: production
+        - name: LOG_LEVEL
+          value: INFO
+        - name: LOG_JSON
+          value: "true"
+        - name: API_WORKERS
+          value: "2"
+        - name: GPT_ADJUDICATION_ENABLED
+          value: "false"    # set to "true" when Azure OpenAI is configured
+        - name: AZURE_KEY_VAULT_URL
+          value: https://<key-vault-name>.vault.azure.net/
+        - name: AZURE_STORAGE_CONTAINER_NAME
+          value: payroll-datasets
+        - name: AZURE_STORAGE_BLOB_NAME
+          value: FULL_50PC_250GC_PRECEDENCE_STRESS_DATASET.json
+        # Secrets injected at runtime (not stored in image or manifest)
+        - name: OPENAI_API_KEY
+          secretRef: openai-api-key
+        - name: AZURE_STORAGE_CONNECTION_STRING
+          secretRef: azure-storage-connection-str
+
+  # --------------------------------------------------------------------------
+  # Secrets (reference Azure Key Vault)
+  # --------------------------------------------------------------------------
+  secrets:
+    - name: openai-api-key
+      keyVaultUrl: https://<key-vault-name>.vault.azure.net/secrets/openai-api-key
+      identity: system
+    - name: azure-storage-connection-str
+      keyVaultUrl: https://<key-vault-name>.vault.azure.net/secrets/azure-storage-connection-str
+      identity: system
+
+  # --------------------------------------------------------------------------
+  # Managed Identity (used to access Key Vault and ACR)
+  # --------------------------------------------------------------------------
+  identity:
+    type: SystemAssigned
+
+  # --------------------------------------------------------------------------
+  # Probes (liveness + readiness)
+  # --------------------------------------------------------------------------
+  probes:
+    liveness:
+      httpGet:
+        path: /api/v1/health
+        port: 8000
+      initialDelaySeconds: 15
+      periodSeconds: 30
+      failureThreshold: 3
+    readiness:
+      httpGet:
+        path: /api/v1/health
+        port: 8000
+      initialDelaySeconds: 10
+      periodSeconds: 10
+      failureThreshold: 5
