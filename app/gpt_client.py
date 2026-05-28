@@ -139,8 +139,10 @@ class GptClient:
         if response_format_json:
             request["response_format"] = {"type": "json_object"}
 
+        logger.info("===== GPT CALL STARTED =====")
         try:
             response = self._client.chat.completions.create(**request)
+            logger.info(f"RAW GPT RESPONSE: {response}")
             content = response.choices[0].message.content
         except TypeError as exc:
             if not response_format_json:
@@ -148,6 +150,7 @@ class GptClient:
             request.pop("response_format", None)
             try:
                 response = self._client.chat.completions.create(**request)
+                logger.info(f"RAW GPT RESPONSE: {response}")
                 content = response.choices[0].message.content
             except Exception as retry_exc:
                 raise GPTAdjudicationError(
