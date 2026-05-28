@@ -41,6 +41,24 @@ def test_map_endpoint_accepts_lowercase_mode(client: TestClient):
     assert response.status_code == 200
 
 
+def test_single_map_endpoint_returns_known_prior_code(client: TestClient):
+    response = client.get("/api/v1/map/ADVANCE_RECOVERY?mode=MAX_OCCURRENCE")
+    assert response.status_code == 200
+    assert response.json() == {
+        "priorCode": "ADVANCE_RECOVERY",
+        "internalCode": "ADV_RECOVERY",
+    }
+
+
+def test_single_map_endpoint_returns_no_match_for_missing_prior_without_gpt(client: TestClient):
+    response = client.get("/api/v1/map/REMOTE_HOME_STIPEND?mode=MAX_OCCURRENCE")
+    assert response.status_code == 200
+    assert response.json() == {
+        "priorCode": "REMOTE_HOME_STIPEND",
+        "internalCode": "NO_MATCH",
+    }
+
+
 def test_map_endpoint_returns_strict_result_array(client: TestClient):
     response = client.post("/api/v1/map", json={"mode": "MAX_OCCURRENCE"})
     results = response.json()

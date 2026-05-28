@@ -33,6 +33,7 @@ class MappingIndex:
     occurrence_counts: IntMetricsByPrior
     latest_dates: DateMetricsByPrior
     first_seen_order: IntMetricsByPrior
+    all_internal_codes: frozenset[str]
     prior_codes: tuple[str, ...]
     total_records: int
 
@@ -87,6 +88,7 @@ def build_index(records: Sequence[NormalizedRecord]) -> MappingIndex:
     occurrence_counts: dict[str, dict[str, int]] = defaultdict(lambda: defaultdict(int))
     latest_dates: dict[str, dict[str, datetime]] = defaultdict(dict)
     first_seen_order: dict[str, dict[str, int]] = defaultdict(dict)
+    internal_code_catalog: set[str] = set()
     prior_order: list[str] = []
 
     for record in records:
@@ -98,6 +100,7 @@ def build_index(records: Sequence[NormalizedRecord]) -> MappingIndex:
 
         all_rows[prior_code].append(record)
         unique_codes[prior_code].add(internal_code)
+        internal_code_catalog.add(internal_code)
         occurrence_counts[prior_code][internal_code] += 1
 
         previous_date = latest_dates[prior_code].get(internal_code)
@@ -115,6 +118,7 @@ def build_index(records: Sequence[NormalizedRecord]) -> MappingIndex:
         occurrence_counts=_freeze_nested_ints(occurrence_counts),
         latest_dates=_freeze_nested_dates(latest_dates),
         first_seen_order=_freeze_nested_ints(first_seen_order),
+        all_internal_codes=frozenset(internal_code_catalog),
         prior_codes=tuple(prior_order),
         total_records=len(records),
     )

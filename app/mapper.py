@@ -12,11 +12,11 @@ from app.config import PrecedenceMode, TieBreakStrategy, settings
 from app.exceptions import (
     GPTAdjudicationError,
     MappingError,
-    UnknownPriorCodeError,
     UnsupportedPrecedenceModeError,
 )
 from app.index_builder import MappingIndex
 from app.logging_utils import log_extra
+from app.prompt_builder import NO_MATCH_INTERNAL_CODE
 from app.schemas import MappingDecisionDetail, MappingResult
 
 logger = logging.getLogger(__name__)
@@ -39,6 +39,14 @@ class GPTAdjudicator(Protocol):
         latest_dates: dict[str, str],
     ) -> tuple[str, str]:
         """Return the selected winner and raw provider response."""
+
+    def recommend_internal_code(
+        self,
+        *,
+        prior_code: str,
+        candidate_codes: Sequence[str],
+    ) -> str:
+        """Recommend one internal code for a prior code missing from history."""
 
 
 @dataclass(frozen=True)
@@ -115,14 +123,17 @@ def map_one(
     """Resolve one prior code, primarily for tests and admin diagnostics."""
 
     normalized_prior_code = prior_code.strip().upper()
+    resolved_mode = _coerce_mode(mode)
     if normalized_prior_code not in index.all_rows:
-        raise UnknownPriorCodeError(
-            f"Prior code '{normalized_prior_code}' not found in the dataset"
+        return _resolve_missing_prior_with_gpt(
+            prior_code=normalized_prior_code,
+            index=index,
+            gpt_client=gpt_client,
         )
     return _resolve(
         index=index,
         prior_code=normalized_prior_code,
-        mode=_coerce_mode(mode),
+        mode=resolved_mode,
         gpt_client=gpt_client,
     )
 
@@ -172,6 +183,105 @@ def _resolve(
 
     _log_decision(detail)
     return MappingResult(priorCode=prior_code, internalCode=winner)
+
+
+def _resolve_missing_prior_with_gpt(
+    *,
+    prior_code: str,
+    index: MappingIndex,
+    gpt_client: GPTAdjudicator | None,
+) -> MappingResult:
+    """Resolve a missing prior code using GPT against the internal-code catalog only."""
+
+    candidate_codes = sorted(index.all_internal_codes)
+    if not candidate_codes:
+        logger.warning(
+            "Missing prior-code fallback has no internal-code candidates: priorCode=%s",
+            prior_code,
+            extra=log_extra("missing_prior_no_candidates", prior_code=prior_code),
+        )
+        return MappingResult(priorCode=prior_code, internalCode=NO_MATCH_INTERNAL_CODE)
+
+    logger.info(
+        "Missing historical prior-code match; GPT fallback eligible: priorCode=%s candidates=%d",
+        prior_code,
+        len(candidate_codes),
+        extra=log_extra(
+            "missing_prior_gpt_fallback_eligible",
+            prior_code=prior_code,
+            candidate_count=len(candidate_codes),
+        ),
+    )
+
+    if gpt_client is None:
+        logger.warning(
+            "Missing prior-code GPT fallback unavailable; returning NO_MATCH: priorCode=%s",
+            prior_code,
+            extra=log_extra("missing_prior_gpt_unavailable", prior_code=prior_code),
+        )
+        return MappingResult(priorCode=prior_code, internalCode=NO_MATCH_INTERNAL_CODE)
+
+    try:
+        recommendation = gpt_client.recommend_internal_code(
+            prior_code=prior_code,
+            candidate_codes=candidate_codes,
+        )
+    except GPTAdjudicationError as exc:
+        logger.warning(
+            "Missing prior-code GPT fallback failed for priorCode=%s: %s",
+            prior_code,
+            exc,
+            extra=log_extra("missing_prior_gpt_failed", prior_code=prior_code),
+        )
+        return MappingResult(priorCode=prior_code, internalCode=NO_MATCH_INTERNAL_CODE)
+    except Exception:
+        logger.exception(
+            "Unexpected missing prior-code GPT fallback failure for priorCode=%s",
+            prior_code,
+            extra=log_extra("missing_prior_gpt_unexpected_failure", prior_code=prior_code),
+        )
+        return MappingResult(priorCode=prior_code, internalCode=NO_MATCH_INTERNAL_CODE)
+
+    internal_code = _validate_gpt_internal_code_recommendation(
+        recommendation=recommendation,
+        candidate_codes=candidate_codes,
+        prior_code=prior_code,
+    )
+    return MappingResult(priorCode=prior_code, internalCode=internal_code)
+
+
+def _validate_gpt_internal_code_recommendation(
+    *,
+    recommendation: str,
+    candidate_codes: Sequence[str],
+    prior_code: str,
+) -> str:
+    normalized = recommendation.strip().upper()
+    allowed = set(candidate_codes)
+    if normalized in allowed:
+        logger.info(
+            "Missing prior-code GPT fallback selected internalCode=%s for priorCode=%s",
+            normalized,
+            prior_code,
+            extra=log_extra(
+                "missing_prior_gpt_selected",
+                prior_code=prior_code,
+                internal_code=normalized,
+            ),
+        )
+        return normalized
+
+    logger.warning(
+        "Missing prior-code GPT fallback returned invalid recommendation=%s for priorCode=%s",
+        normalized,
+        prior_code,
+        extra=log_extra(
+            "missing_prior_gpt_invalid_recommendation",
+            prior_code=prior_code,
+            recommendation=normalized,
+        ),
+    )
+    return NO_MATCH_INTERNAL_CODE
 
 
 @register_mode_resolver(PrecedenceMode.ONE_TO_ONE)

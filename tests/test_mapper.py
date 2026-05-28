@@ -10,7 +10,29 @@ from app.config import PrecedenceMode, TieBreakStrategy, settings
 from app.index_builder import build_index
 from app.loader import _normalize
 from app.mapper import MODE_RESOLVERS, map_all, map_one, supported_modes
+from app.prompt_builder import NO_MATCH_INTERNAL_CODE
 from app.schemas import NormalizedRecord
+
+
+class FailingGptClient:
+    def adjudicate(self, **kwargs):
+        raise AssertionError("GPT should not be called")
+
+    def recommend_internal_code(self, **kwargs):
+        raise AssertionError("GPT should not be called")
+
+
+class RecommendingGptClient:
+    def __init__(self, recommendation: str) -> None:
+        self.recommendation = recommendation
+        self.received_candidate_codes: list[str] | None = None
+
+    def adjudicate(self, **kwargs):
+        raise AssertionError("Tie adjudication should not be called")
+
+    def recommend_internal_code(self, **kwargs) -> str:
+        self.received_candidate_codes = list(kwargs["candidate_codes"])
+        return self.recommendation
 
 
 def make_record(
@@ -158,10 +180,61 @@ def test_map_one_normalizes_lookup_code():
     assert result.internalCode == "BASIC"
 
 
-def test_unknown_prior_code_raises():
+def test_known_prior_code_does_not_use_missing_prior_gpt_fallback():
     index = build_index([make_record("KNOWN", "INT", "2024-01-01")])
-    with pytest.raises(KeyError, match="UNKNOWN"):
-        map_one(index, "UNKNOWN", PrecedenceMode.MAX_OCCURRENCE)
+    result = map_one(
+        index,
+        "KNOWN",
+        PrecedenceMode.MAX_OCCURRENCE,
+        gpt_client=FailingGptClient(),
+    )
+    assert result.internalCode == "INT"
+
+
+def test_missing_prior_code_uses_gpt_recommendation_from_internal_catalog():
+    index = build_index(
+        [
+            make_record("REG", "BASIC_PAY", "2024-01-01"),
+            make_record("OT", "OVERTIME", "2024-01-01"),
+            make_record("REMOTE", "REMOTE_ALLOWANCE", "2024-01-01"),
+        ]
+    )
+    gpt_client = RecommendingGptClient("remote_allowance")
+
+    result = map_one(
+        index,
+        "REMOTE_HOME_STIPEND",
+        PrecedenceMode.MAX_OCCURRENCE,
+        gpt_client=gpt_client,
+    )
+
+    assert result.model_dump() == {
+        "priorCode": "REMOTE_HOME_STIPEND",
+        "internalCode": "REMOTE_ALLOWANCE",
+    }
+    assert gpt_client.received_candidate_codes == [
+        "BASIC_PAY",
+        "OVERTIME",
+        "REMOTE_ALLOWANCE",
+    ]
+
+
+def test_missing_prior_code_returns_no_match_without_gpt_client():
+    index = build_index([make_record("KNOWN", "INT", "2024-01-01")])
+    result = map_one(index, "UNKNOWN", PrecedenceMode.MAX_OCCURRENCE)
+    assert result.priorCode == "UNKNOWN"
+    assert result.internalCode == NO_MATCH_INTERNAL_CODE
+
+
+def test_missing_prior_code_rejects_invalid_gpt_recommendation():
+    index = build_index([make_record("KNOWN", "INT", "2024-01-01")])
+    result = map_one(
+        index,
+        "UNKNOWN",
+        PrecedenceMode.MAX_OCCURRENCE,
+        gpt_client=RecommendingGptClient("MADE_UP_CODE"),
+    )
+    assert result.internalCode == NO_MATCH_INTERNAL_CODE
 
 
 @pytest.fixture(scope="module")

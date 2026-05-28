@@ -4,11 +4,13 @@ from __future__ import annotations
 
 import json
 import logging
+from collections.abc import Sequence
 from typing import Any
 
 from app.config import PrecedenceMode, settings
 from app.exceptions import GPTAdjudicationError
 from app.logging_utils import log_extra
+from app.prompt_builder import build_missing_prior_prompt
 
 logger = logging.getLogger(__name__)
 
@@ -21,6 +23,12 @@ Output rules:
 - The JSON object must have exactly one key: "winner".
 - The value must be one of the provided candidate codes exactly.
 - Do not include explanations, markdown, scores, or new codes.
+"""
+
+_MISSING_PRIOR_SYSTEM_PROMPT = """You are a payroll code recommendation component.
+
+You must select one internal payroll code from the provided list, or return NO_MATCH.
+Return only the selected code. Do not include explanations, markdown, scores, or new codes.
 """
 
 
@@ -48,16 +56,43 @@ class GptClient:
             raise GPTAdjudicationError("No tied candidates supplied")
 
         raw_response = self._call_api(
-            self._build_user_message(
+            system_prompt=_SYSTEM_PROMPT,
+            user_message=self._build_user_message(
                 prior_code=prior_code,
                 candidates=candidates,
                 mode=mode,
                 occurrence_counts=occurrence_counts,
                 latest_dates=latest_dates,
-            )
+            ),
+            response_format_json=True,
         )
         winner = self._parse_response(raw_response, valid_candidates=candidates)
         return winner, raw_response
+
+    def recommend_internal_code(
+        self,
+        *,
+        prior_code: str,
+        candidate_codes: Sequence[str],
+    ) -> str:
+        """Recommend one internal code for a prior code missing from history."""
+
+        if not self._client:
+            raise GPTAdjudicationError("OpenAI client is not configured")
+
+        candidates = list(candidate_codes)
+        if not candidates:
+            raise GPTAdjudicationError("No internal code candidates supplied")
+
+        raw_response = self._call_api(
+            system_prompt=_MISSING_PRIOR_SYSTEM_PROMPT,
+            user_message=build_missing_prior_prompt(
+                prior_code=prior_code,
+                candidate_codes=candidates,
+            ),
+            response_format_json=False,
+        )
+        return self._parse_plain_code_response(raw_response)
 
     @staticmethod
     def _build_user_message(
@@ -85,36 +120,54 @@ class GptClient:
         }
         return json.dumps(payload, separators=(",", ":"))
 
-    def _call_api(self, user_message: str) -> str:
+    def _call_api(
+        self,
+        *,
+        system_prompt: str,
+        user_message: str,
+        response_format_json: bool,
+    ) -> str:
+        request: dict[str, object] = {
+            "model": settings.effective_openai_model,
+            "messages": [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_message},
+            ],
+            "max_tokens": settings.openai_max_tokens,
+            "temperature": settings.openai_temperature,
+        }
+        if response_format_json:
+            request["response_format"] = {"type": "json_object"}
+
         try:
-            response = self._client.chat.completions.create(
-                model=settings.effective_openai_model,
-                messages=[
-                    {"role": "system", "content": _SYSTEM_PROMPT},
-                    {"role": "user", "content": user_message},
-                ],
-                max_tokens=settings.openai_max_tokens,
-                temperature=settings.openai_temperature,
-                response_format={"type": "json_object"},
-            )
+            response = self._client.chat.completions.create(**request)
             content = response.choices[0].message.content
-        except TypeError:
-            response = self._client.chat.completions.create(
-                model=settings.effective_openai_model,
-                messages=[
-                    {"role": "system", "content": _SYSTEM_PROMPT},
-                    {"role": "user", "content": user_message},
-                ],
-                max_tokens=settings.openai_max_tokens,
-                temperature=settings.openai_temperature,
-            )
-            content = response.choices[0].message.content
+        except TypeError as exc:
+            if not response_format_json:
+                raise GPTAdjudicationError(f"OpenAI API call failed: {exc}") from exc
+            request.pop("response_format", None)
+            try:
+                response = self._client.chat.completions.create(**request)
+                content = response.choices[0].message.content
+            except Exception as retry_exc:
+                raise GPTAdjudicationError(
+                    f"OpenAI API call failed: {retry_exc}"
+                ) from retry_exc
         except Exception as exc:
             raise GPTAdjudicationError(f"OpenAI API call failed: {exc}") from exc
 
         if not content:
             raise GPTAdjudicationError("OpenAI API returned an empty response")
         return content.strip()
+
+    @staticmethod
+    def _parse_plain_code_response(raw_response: str) -> str:
+        cleaned = raw_response.strip()
+        if cleaned.startswith("```"):
+            cleaned = "\n".join(
+                line for line in cleaned.splitlines() if not line.strip().startswith("```")
+            ).strip()
+        return cleaned.strip().strip('"').strip("'").upper()
 
     @staticmethod
     def _parse_response(raw_response: str, *, valid_candidates: list[str]) -> str:
@@ -145,7 +198,7 @@ class GptClient:
             from openai import AzureOpenAI, OpenAI  # type: ignore
         except ImportError:
             logger.warning(
-                "openai package is not installed; GPT adjudication disabled",
+                "openai package is not installed; GPT integration disabled",
                 extra=log_extra("gpt_client_unavailable"),
             )
             return None
@@ -181,7 +234,7 @@ class GptClient:
             )
 
         logger.info(
-            "No OpenAI API key configured; GPT adjudication disabled",
+            "No OpenAI API key configured; GPT integration disabled",
             extra=log_extra("gpt_client_disabled"),
         )
         return None

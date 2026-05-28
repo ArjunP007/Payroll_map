@@ -12,7 +12,7 @@ from app.gpt_client import GptClient
 from app.index_builder import MappingIndex, build_index
 from app.loader import load_dataset
 from app.logging_utils import log_extra
-from app.mapper import GPTAdjudicator, map_all as resolve_all
+from app.mapper import GPTAdjudicator, map_all as resolve_all, map_one as resolve_one
 from app.schemas import MappingResult
 from app.validator import validate_loaded_records, validate_mapping_results
 
@@ -51,7 +51,7 @@ class PayrollMappingEngine:
         """Load the dataset, build indexes, and configure optional GPT support."""
 
         self.reload(source=source)
-        self.configure_gpt_adjudication()
+        self.configure_gpt_integration()
 
     def reload(self, source: str | DatasetSource | None = None) -> EngineSnapshot:
         """Reload records and atomically replace the active in-memory index."""
@@ -74,14 +74,14 @@ class PayrollMappingEngine:
         )
         return snapshot
 
-    def configure_gpt_adjudication(self) -> None:
-        """Configure the optional GPT adjudicator without making it mandatory."""
+    def configure_gpt_integration(self) -> None:
+        """Configure the optional GPT client without making it mandatory."""
 
-        if not settings.gpt_adjudication_enabled:
+        if not settings.gpt_adjudication_enabled and not settings.gpt_missing_prior_fallback_enabled:
             self._gpt_client = None
             logger.info(
-                "GPT adjudication is disabled",
-                extra=log_extra("gpt_adjudication_disabled"),
+                "GPT integration is disabled",
+                extra=log_extra("gpt_integration_disabled"),
             )
             return
 
@@ -90,14 +90,20 @@ class PayrollMappingEngine:
         except Exception:
             self._gpt_client = None
             logger.exception(
-                "GPT adjudication setup failed; deterministic mapping remains available",
-                extra=log_extra("gpt_adjudication_setup_failed"),
+                "GPT integration setup failed; deterministic mapping remains available",
+                extra=log_extra("gpt_integration_setup_failed"),
             )
             return
 
         logger.info(
-            "GPT adjudication is enabled",
-            extra=log_extra("gpt_adjudication_enabled"),
+            "GPT integration configured: adjudication=%s missingPriorFallback=%s",
+            settings.gpt_adjudication_enabled,
+            settings.gpt_missing_prior_fallback_enabled,
+            extra=log_extra(
+                "gpt_integration_configured",
+                adjudication_enabled=settings.gpt_adjudication_enabled,
+                missing_prior_fallback_enabled=settings.gpt_missing_prior_fallback_enabled,
+            ),
         )
 
     def map_all(self, mode: PrecedenceMode | str) -> list[MappingResult]:
@@ -107,6 +113,17 @@ class PayrollMappingEngine:
         results = resolve_all(index=index, mode=mode, gpt_client=self._gpt_client)
         validate_mapping_results(results, index.prior_codes)
         return results
+
+    def map_one(self, prior_code: str, mode: PrecedenceMode | str) -> MappingResult:
+        """Resolve one prior code, using GPT fallback when history has no match."""
+
+        index = self.require_index()
+        return resolve_one(
+            index=index,
+            prior_code=prior_code,
+            mode=mode,
+            gpt_client=self._gpt_client,
+        )
 
     def prior_codes(self) -> tuple[str, ...]:
         """Return known prior codes in source order."""

@@ -10,7 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, RedirectResponse
 
 from app.azure_storage import load_secrets_from_key_vault
-from app.config import configure_logging, settings
+from app.config import PrecedenceMode, configure_logging, settings
 from app.engine import PayrollMappingEngine
 from app.exceptions import (
     DatasetLoadError,
@@ -231,6 +231,25 @@ async def batch_map(request: MappingRequest) -> list[MappingResult]:
         extra=log_extra("mapping_request", mode=request.mode.value),
     )
     return engine.map_all(request.mode)
+
+
+@app.get(
+    "/api/v1/map/{prior_code}",
+    response_model=MappingResult,
+    summary="Resolve one prior code, with GPT fallback for missing history",
+    tags=["Mapping"],
+)
+async def map_single_prior_code(
+    prior_code: str,
+    mode: PrecedenceMode = settings.default_mode,
+) -> MappingResult:
+    logger.info(
+        "Single mapping request: priorCode=%s mode=%s",
+        prior_code,
+        mode.value,
+        extra=log_extra("single_mapping_request", prior_code=prior_code, mode=mode.value),
+    )
+    return engine.map_one(prior_code=prior_code, mode=mode)
 
 
 @app.post(
