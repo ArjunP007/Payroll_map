@@ -6,26 +6,17 @@ import json
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import Any
 
 from pydantic import ValidationError as PydanticValidationError
 
-from app.config import settings
+from app.config import DatasetSource, settings
+from app.exceptions import DatasetLoadError, DatasetSchemaError, RecordValidationError
+from app.logging_utils import log_extra
 from app.schemas import NormalizedRecord, RawCandidateRecord
 
 logger = logging.getLogger(__name__)
 
-
-class DatasetLoadError(RuntimeError):
-    """Raised when the dataset cannot be read or decoded."""
-
-
-class DatasetSchemaError(ValueError):
-    """Raised when the dataset shape is invalid."""
-
-
-class RecordValidationError(ValueError):
-    """Raised when one candidate row is invalid."""
+RawDataset = dict[object, object]
 
 
 def load_dataset(
@@ -39,31 +30,41 @@ def load_dataset(
     effective_source = _resolve_source(source)
     raw_json = _read_raw_json(effective_source, path=path)
     records = _normalize(raw_json, strict=strict)
+    prior_code_count = len({record.priorCode for record in records})
     logger.info(
         "Loaded payroll dataset from %s: %d prior codes, %d candidate records",
-        effective_source,
-        len({record.priorCode for record in records}),
+        effective_source.value,
+        prior_code_count,
         len(records),
+        extra=log_extra(
+            "dataset_loaded",
+            source=effective_source.value,
+            prior_code_count=prior_code_count,
+            record_count=len(records),
+        ),
     )
     return records
 
 
-def _resolve_source(source: str | None) -> str:
+def _resolve_source(source: str | DatasetSource | None) -> DatasetSource:
     if source is None:
-        return "azure" if settings.azure_storage_connection_string else "local"
+        return settings.effective_dataset_source
+    if isinstance(source, DatasetSource):
+        return source
     normalized = source.strip().lower()
-    if normalized not in {"local", "azure"}:
-        raise DatasetLoadError("source must be 'local', 'azure', or omitted")
-    return normalized
+    try:
+        return DatasetSource(normalized)
+    except ValueError as exc:
+        raise DatasetLoadError("source must be 'local', 'azure', or omitted") from exc
 
 
-def _read_raw_json(source: str, *, path: str | Path | None = None) -> dict[str, Any]:
-    if source == "azure":
+def _read_raw_json(source: DatasetSource, *, path: str | Path | None = None) -> RawDataset:
+    if source == DatasetSource.AZURE:
         return _read_from_azure()
     return _read_from_local(path=path)
 
 
-def _read_from_local(*, path: str | Path | None = None) -> dict[str, Any]:
+def _read_from_local(*, path: str | Path | None = None) -> RawDataset:
     dataset_path = Path(path) if path is not None else settings.dataset_local_path
     dataset_path = _resolve_local_path(dataset_path)
 
@@ -74,7 +75,7 @@ def _read_from_local(*, path: str | Path | None = None) -> dict[str, Any]:
 
     try:
         with dataset_path.open("r", encoding="utf-8") as handle:
-            raw = json.load(handle)
+            raw: object = json.load(handle)
     except json.JSONDecodeError as exc:
         raise DatasetLoadError(f"Invalid JSON in dataset file '{dataset_path}': {exc}") from exc
     except OSError as exc:
@@ -99,7 +100,7 @@ def _resolve_local_path(path: Path) -> Path:
     return project_root / path
 
 
-def _read_from_azure() -> dict[str, Any]:
+def _read_from_azure() -> RawDataset:
     try:
         from azure.storage.blob import BlobServiceClient  # type: ignore
     except ImportError as exc:
@@ -117,7 +118,7 @@ def _read_from_azure() -> dict[str, Any]:
             blob=settings.azure_storage_blob_name,
         )
         payload = blob_client.download_blob().readall()
-        raw = json.loads(payload.decode("utf-8"))
+        raw: object = json.loads(payload.decode("utf-8"))
     except json.JSONDecodeError as exc:
         raise DatasetLoadError(
             f"Invalid JSON in Azure blob '{settings.azure_storage_blob_name}': {exc}"
@@ -129,18 +130,28 @@ def _read_from_azure() -> dict[str, Any]:
         raise DatasetSchemaError(
             f"Top-level dataset must be a JSON object, got {type(raw).__name__}"
         )
+    logger.info(
+        "Azure dataset load completed: container=%s blob=%s",
+        settings.azure_storage_container_name,
+        settings.azure_storage_blob_name,
+        extra=log_extra(
+            "azure_dataset_load_completed",
+            container=settings.azure_storage_container_name,
+            blob=settings.azure_storage_blob_name,
+        ),
+    )
     return raw
 
 
-def _normalize(raw: Any, *, strict: bool = True) -> list[NormalizedRecord]:
+def _normalize(raw: object, *, strict: bool = True) -> list[NormalizedRecord]:
     """Normalize nested JSON into a flat list of validated records."""
 
-    _validate_top_level(raw)
+    dataset = _validate_top_level(raw)
     records: list[NormalizedRecord] = []
     errors: list[str] = []
     global_index = 0
 
-    for prior_code_raw, candidates in raw.items():
+    for prior_code_raw, candidates in dataset.items():
         try:
             prior_code = _normalize_code(prior_code_raw, field_name="priorCode")
         except RecordValidationError as exc:
@@ -184,6 +195,11 @@ def _normalize(raw: Any, *, strict: bool = True) -> list[NormalizedRecord]:
         preview = "; ".join(errors[:10])
         if len(errors) > 10:
             preview += f"; ... {len(errors) - 10} more"
+        logger.warning(
+            "Dataset validation failed with %d error(s)",
+            len(errors),
+            extra=log_extra("dataset_validation_failed", error_count=len(errors)),
+        )
         raise DatasetSchemaError(f"Dataset validation failed: {preview}")
 
     if not records:
@@ -192,19 +208,20 @@ def _normalize(raw: Any, *, strict: bool = True) -> list[NormalizedRecord]:
     return records
 
 
-def _validate_top_level(raw: Any) -> None:
+def _validate_top_level(raw: object) -> RawDataset:
     if not isinstance(raw, dict):
         raise DatasetSchemaError(
             f"Top-level dataset must be a JSON object, got {type(raw).__name__}"
         )
     if not raw:
         raise DatasetSchemaError("Dataset is empty: no prior codes found")
+    return raw
 
 
 def _parse_candidate(
     prior_code: str,
     candidate_index: int,
-    candidate: Any,
+    candidate: object,
     global_index: int = 0,
 ) -> NormalizedRecord:
     if not isinstance(candidate, dict):
@@ -229,7 +246,7 @@ def _parse_candidate(
     )
 
 
-def _normalize_code(value: Any, *, field_name: str = "code") -> str:
+def _normalize_code(value: object, *, field_name: str = "code") -> str:
     if not isinstance(value, str):
         raise RecordValidationError(f"{field_name} must be a string")
     normalized = value.strip().upper()
@@ -238,7 +255,7 @@ def _normalize_code(value: Any, *, field_name: str = "code") -> str:
     return normalized
 
 
-def _parse_date(date_value: Any, prior_code: str, candidate_index: int) -> datetime:
+def _parse_date(date_value: object, prior_code: str, candidate_index: int) -> datetime:
     if not isinstance(date_value, str):
         raise RecordValidationError("LastModifiedDate must be a string")
     try:

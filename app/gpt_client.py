@@ -4,8 +4,11 @@ from __future__ import annotations
 
 import json
 import logging
+from typing import Any
 
 from app.config import PrecedenceMode, settings
+from app.exceptions import GPTAdjudicationError
+from app.logging_utils import log_extra
 
 logger = logging.getLogger(__name__)
 
@@ -21,15 +24,14 @@ Output rules:
 """
 
 
-class GptAdjudicationError(RuntimeError):
-    """Raised when GPT adjudication fails validation."""
+GptAdjudicationError = GPTAdjudicationError
 
 
 class GptClient:
     """Thin wrapper around OpenAI or Azure OpenAI chat completions."""
 
-    def __init__(self) -> None:
-        self._client = self._build_client()
+    def __init__(self, client: Any | None = None) -> None:
+        self._client: Any | None = client if client is not None else self._build_client()
 
     def adjudicate(
         self,
@@ -41,9 +43,9 @@ class GptClient:
         latest_dates: dict[str, str],
     ) -> tuple[str, str]:
         if not self._client:
-            raise GptAdjudicationError("OpenAI client is not configured")
+            raise GPTAdjudicationError("OpenAI client is not configured")
         if not candidates:
-            raise GptAdjudicationError("No tied candidates supplied")
+            raise GPTAdjudicationError("No tied candidates supplied")
 
         raw_response = self._call_api(
             self._build_user_message(
@@ -108,10 +110,10 @@ class GptClient:
             )
             content = response.choices[0].message.content
         except Exception as exc:
-            raise GptAdjudicationError(f"OpenAI API call failed: {exc}") from exc
+            raise GPTAdjudicationError(f"OpenAI API call failed: {exc}") from exc
 
         if not content:
-            raise GptAdjudicationError("OpenAI API returned an empty response")
+            raise GPTAdjudicationError("OpenAI API returned an empty response")
         return content.strip()
 
     @staticmethod
@@ -125,38 +127,61 @@ class GptClient:
         try:
             parsed = json.loads(cleaned)
         except json.JSONDecodeError as exc:
-            raise GptAdjudicationError(f"GPT returned invalid JSON: {raw_response}") from exc
+            raise GPTAdjudicationError(f"GPT returned invalid JSON: {raw_response}") from exc
 
         if not isinstance(parsed, dict) or set(parsed.keys()) != {"winner"}:
-            raise GptAdjudicationError(f"GPT response must contain only 'winner': {parsed}")
+            raise GPTAdjudicationError(f"GPT response must contain only 'winner': {parsed}")
 
         winner = str(parsed["winner"]).strip().upper()
         if winner not in valid_candidates:
-            raise GptAdjudicationError(
+            raise GPTAdjudicationError(
                 f"GPT winner '{winner}' is not in tied candidates {valid_candidates}"
             )
         return winner
 
     @staticmethod
-    def _build_client():
+    def _build_client() -> Any | None:
         try:
             from openai import AzureOpenAI, OpenAI  # type: ignore
         except ImportError:
-            logger.warning("openai package is not installed; GPT adjudication disabled")
+            logger.warning(
+                "openai package is not installed; GPT adjudication disabled",
+                extra=log_extra("gpt_client_unavailable"),
+            )
             return None
 
         if settings.uses_azure_openai:
             if not settings.openai_api_key:
-                logger.warning("Azure OpenAI is configured without OPENAI_API_KEY")
+                logger.warning(
+                    "Azure OpenAI is configured without OPENAI_API_KEY",
+                    extra=log_extra("azure_openai_missing_api_key"),
+                )
                 return None
+            logger.info(
+                "Azure OpenAI client configured",
+                extra=log_extra("gpt_client_configured", provider="azure_openai"),
+            )
             return AzureOpenAI(
                 api_key=settings.openai_api_key,
                 azure_endpoint=settings.azure_openai_endpoint,
                 api_version=settings.azure_openai_api_version,
+                timeout=settings.openai_timeout_seconds,
+                max_retries=settings.openai_max_retries,
             )
 
         if settings.openai_api_key:
-            return OpenAI(api_key=settings.openai_api_key)
+            logger.info(
+                "OpenAI client configured",
+                extra=log_extra("gpt_client_configured", provider="openai"),
+            )
+            return OpenAI(
+                api_key=settings.openai_api_key,
+                timeout=settings.openai_timeout_seconds,
+                max_retries=settings.openai_max_retries,
+            )
 
-        logger.info("No OpenAI API key configured; GPT adjudication disabled")
+        logger.info(
+            "No OpenAI API key configured; GPT adjudication disabled",
+            extra=log_extra("gpt_client_disabled"),
+        )
         return None

@@ -10,7 +10,9 @@ The service loads historical nested JSON mappings, normalizes them, builds in-me
 paycor_mapping/
   app/
     main.py             FastAPI application and routes
+    engine.py           Runtime orchestration for loading, indexing, and mapping
     config.py           Environment-backed settings
+    exceptions.py       Shared domain exception hierarchy
     schemas.py          Pydantic request, response, and internal models
     loader.py           JSON loading, validation, normalization
     index_builder.py    Fast lookup/index construction
@@ -18,6 +20,7 @@ paycor_mapping/
     gpt_client.py       Optional bounded GPT adjudication layer
     validator.py        Dataset and output validation guards
     azure_storage.py    Azure Key Vault and Blob Storage helpers
+    logging_utils.py    Structured logging helpers
 
   data/
     FULL_50PC_250GC_PRECEDENCE_STRESS_DATASET.json
@@ -65,6 +68,29 @@ Supported modes:
 - `ONE_TO_ONE`
 - `MAX_OCCURRENCE`
 - `LAST_MODIFIED_DATE`
+
+Precedence modes are resolved through `MODE_RESOLVERS` in `app/mapper.py`.
+Adding a deterministic mode means adding a resolver and registering it with
+`register_mode_resolver`.
+
+## Configuration
+
+Settings are environment-backed and centralized in `app/config.py`.
+
+Common variables:
+
+- `ENVIRONMENT`: `local`, `development`, `staging`, `production`, or `azure`
+- `DATASET_SOURCE`: `local` or `azure`
+- `DATASET_LOCAL_PATH`: local JSON path
+- `AZURE_STORAGE_CONNECTION_STRING`
+- `AZURE_STORAGE_CONTAINER_NAME`
+- `AZURE_STORAGE_BLOB_NAME`
+- `GPT_ADJUDICATION_ENABLED`
+- `OPENAI_API_KEY`
+- `AZURE_OPENAI_ENDPOINT`
+- `AZURE_OPENAI_DEPLOYMENT`
+- `LOG_LEVEL`
+- `LOG_JSON`
 
 ## Verify
 

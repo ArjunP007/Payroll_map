@@ -4,25 +4,35 @@ from __future__ import annotations
 
 import logging
 from collections import defaultdict
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from datetime import datetime
 from types import MappingProxyType
-from typing import Mapping
+from typing import TypeVar
 
+from app.exceptions import IndexBuildError
+from app.logging_utils import log_extra
 from app.schemas import NormalizedRecord
 
 logger = logging.getLogger(__name__)
+
+T = TypeVar("T")
+
+RowsByPrior = Mapping[str, tuple[NormalizedRecord, ...]]
+CodesByPrior = Mapping[str, frozenset[str]]
+IntMetricsByPrior = Mapping[str, Mapping[str, int]]
+DateMetricsByPrior = Mapping[str, Mapping[str, datetime]]
 
 
 @dataclass(frozen=True)
 class MappingIndex:
     """Immutable lookup bundle used by the mapping engine."""
 
-    all_rows: Mapping[str, tuple[NormalizedRecord, ...]]
-    unique_codes: Mapping[str, frozenset[str]]
-    occurrence_counts: Mapping[str, Mapping[str, int]]
-    latest_dates: Mapping[str, Mapping[str, datetime]]
-    first_seen_order: Mapping[str, Mapping[str, int]]
+    all_rows: RowsByPrior
+    unique_codes: CodesByPrior
+    occurrence_counts: IntMetricsByPrior
+    latest_dates: DateMetricsByPrior
+    first_seen_order: IntMetricsByPrior
     prior_codes: tuple[str, ...]
     total_records: int
 
@@ -47,8 +57,8 @@ class MappingIndex:
     def candidate_evidence(
         self,
         prior_code: str,
-        candidates: list[str] | tuple[str, ...] | None = None,
-    ) -> list[dict[str, object]]:
+        candidates: Sequence[str] | None = None,
+    ) -> list[dict[str, str | int]]:
         """Return bounded internal evidence for logging or GPT adjudication."""
 
         selected = list(candidates or sorted(self.unique_codes[prior_code]))
@@ -66,11 +76,11 @@ class MappingIndex:
         ]
 
 
-def build_index(records: list[NormalizedRecord]) -> MappingIndex:
+def build_index(records: Sequence[NormalizedRecord]) -> MappingIndex:
     """Build all lookup structures in one pass over normalized records."""
 
     if not records:
-        raise ValueError("Cannot build index from an empty record list")
+        raise IndexBuildError("Cannot build index from an empty record list")
 
     all_rows: dict[str, list[NormalizedRecord]] = defaultdict(list)
     unique_codes: dict[str, set[str]] = defaultdict(set)
@@ -116,11 +126,18 @@ def build_index(records: list[NormalizedRecord]) -> MappingIndex:
         summary["totalRecords"],
         summary["oneToOnePriorCodes"],
         summary["ambiguousPriorCodes"],
+        extra=log_extra(
+            "mapping_index_built",
+            prior_code_count=summary["totalPriorCodes"],
+            record_count=summary["totalRecords"],
+            one_to_one_count=summary["oneToOnePriorCodes"],
+            ambiguous_count=summary["ambiguousPriorCodes"],
+        ),
     )
     return index
 
 
-def _freeze_mapping(value: dict) -> Mapping:
+def _freeze_mapping(value: Mapping[str, T]) -> Mapping[str, T]:
     return MappingProxyType(dict(value))
 
 

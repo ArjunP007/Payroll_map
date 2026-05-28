@@ -6,7 +6,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-from app.config import PrecedenceMode
+from app.config import DatasetSource, PrecedenceMode
 
 
 class RawCandidateRecord(BaseModel):
@@ -68,7 +68,7 @@ class MappingRequest(BaseModel):
 
     @field_validator("mode", mode="before")
     @classmethod
-    def normalize_mode(cls, value: str) -> str:
+    def normalize_mode(cls, value: str | PrecedenceMode) -> str | PrecedenceMode:
         if isinstance(value, str):
             return value.strip().upper()
         return value
@@ -79,15 +79,17 @@ class ReloadRequest(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    source: str | None = Field(default=None)
+    source: DatasetSource | None = Field(default=None)
 
     @field_validator("source", mode="before")
     @classmethod
-    def validate_source(cls, value: str | None) -> str | None:
+    def validate_source(cls, value: str | DatasetSource | None) -> str | DatasetSource | None:
         if value is None:
             return None
+        if isinstance(value, DatasetSource):
+            return value
         normalized = str(value).strip().lower()
-        allowed = {"local", "azure"}
+        allowed = {item.value for item in DatasetSource}
         if normalized not in allowed:
             raise ValueError(f"source must be one of {sorted(allowed)}")
         return normalized
@@ -112,6 +114,13 @@ class ReloadResponse(BaseModel):
     priorCodeCount: int
     recordCount: int
     message: str
+
+
+class PriorCodesResponse(BaseModel):
+    """Admin response containing known prior codes in source order."""
+
+    totalPriorCodes: int
+    priorCodes: list[str]
 
 
 class ErrorResponse(BaseModel):

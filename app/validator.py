@@ -2,17 +2,16 @@
 
 from __future__ import annotations
 
-import logging
+from collections.abc import Sequence
 from datetime import datetime
+import logging
 
 from app.config import PrecedenceMode
+from app.exceptions import ValidationError
+from app.logging_utils import log_extra
 from app.schemas import MappingResult, NormalizedRecord
 
 logger = logging.getLogger(__name__)
-
-
-class ValidationError(ValueError):
-    """Raised when a business validation rule fails."""
 
 
 def validate_mapping_request_mode(mode: str | PrecedenceMode) -> PrecedenceMode:
@@ -27,8 +26,12 @@ def validate_mapping_request_mode(mode: str | PrecedenceMode) -> PrecedenceMode:
         ) from exc
 
 
-def validate_loaded_records(records: list[NormalizedRecord]) -> None:
+def validate_loaded_records(records: Sequence[NormalizedRecord]) -> None:
     if not records:
+        logger.error(
+            "Dataset validation failed: no records",
+            extra=log_extra("dataset_validation_failed"),
+        )
         raise ValidationError("Dataset is empty")
 
     prior_codes = {record.priorCode for record in records}
@@ -53,12 +56,18 @@ def validate_loaded_records(records: list[NormalizedRecord]) -> None:
         len(prior_codes),
         len(internal_codes),
         len(records),
+        extra=log_extra(
+            "dataset_validation_passed",
+            prior_code_count=len(prior_codes),
+            internal_code_count=len(internal_codes),
+            record_count=len(records),
+        ),
     )
 
 
 def validate_mapping_results(
-    results: list[MappingResult],
-    index_prior_codes: list[str] | tuple[str, ...],
+    results: Sequence[MappingResult],
+    index_prior_codes: Sequence[str],
 ) -> None:
     if not results:
         raise ValidationError("Mapping produced zero results")

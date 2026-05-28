@@ -9,7 +9,7 @@ import pytest
 from app.config import PrecedenceMode, TieBreakStrategy, settings
 from app.index_builder import build_index
 from app.loader import _normalize
-from app.mapper import map_all, map_one
+from app.mapper import MODE_RESOLVERS, map_all, map_one, supported_modes
 from app.schemas import NormalizedRecord
 
 
@@ -37,6 +37,11 @@ def test_one_to_one_clean_case():
     )
     result = map_one(index, "LEAVE_ENCASHMENT", PrecedenceMode.ONE_TO_ONE)
     assert result.internalCode == "LEAVE_ENCASH"
+
+
+def test_precedence_modes_are_registered_for_dynamic_dispatch():
+    assert set(supported_modes()) == set(PrecedenceMode)
+    assert set(MODE_RESOLVERS) == set(PrecedenceMode)
 
 
 def test_one_to_one_falls_back_for_ambiguous_codes():
