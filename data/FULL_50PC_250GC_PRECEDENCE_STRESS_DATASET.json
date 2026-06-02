@@ -1,355 +1,1309 @@
-{
-  "Earnings": {
-    "BASIC_SALARY": [
-      {
-        "globalCode": "BONUS",
-        "LastModifiedDate": "10/23/2021"
-      },
-      {
-        "globalCode": "EMPLOYEE_PF",
-        "LastModifiedDate": "04/21/2023"
-      },
-      {
-        "globalCode": "LEAVE_ENCASH",
-        "LastModifiedDate": "08/12/2023"
-      },
-      {
-        "globalCode": "TRANSPORT",
-        "LastModifiedDate": "01/04/2024"
-      },
-      {
-        "globalCode": "MEDICAL",
-        "LastModifiedDate": "04/18/2023"
-      },
-      {
-        "globalCode": "ATTENDANCE_INCENTIVE",
-        "LastModifiedDate": "04/05/2024"
-      },
-      {
-        "globalCode": "SHIFT_PREMIUM",
-        "LastModifiedDate": "06/08/2020"
-      }
-    ],
-    "OVERTIME_PAY": [
-      {
-        "globalCode": "BASIC",
-        "LastModifiedDate": "05/17/2022"
-      },
+ {
+ "Earnings": {
+    "ARREAR_PAYMENT": [
       {
         "globalCode": "PERFORMANCE_BONUS",
-        "LastModifiedDate": "01/16/2023"
+        "LastModifiedDate": "05/12/2024",
+        "internalDescription": "Earnings metadata for PERFORMANCE_BONUS",
+        "payType": "Earnings",
+        "country": "IN",
+        "vendorLabel": "VENDOR_E_2"
       },
       {
-        "globalCode": "PTAX",
-        "LastModifiedDate": "07/10/2021"
-      },
-      {
-        "globalCode": "SUPPLEMENTAL_PAY",
-        "LastModifiedDate": "10/28/2022"
+        "globalCode": "REFERRAL_BONUS",
+        "LastModifiedDate": "06/04/2024",
+        "internalDescription": "Earnings metadata for REFERRAL_BONUS",
+        "payType": "Earnings",
+        "country": "US",
+        "vendorLabel": "VENDOR_E_5"
       }
     ],
-    "HOUSE_ALLOWANCE": [
-      {
-        "globalCode": "BASE",
-        "LastModifiedDate": "08/14/2022"
-      },
+    "ATTENDANCE_INCENTIVE": [
       {
         "globalCode": "HOUSE_RENT_ALLOWANCE",
-        "LastModifiedDate": "07/14/2023"
-      },
-      {
-        "globalCode": "INSURANCE",
-        "LastModifiedDate": "05/28/2024"
-      },
-      {
-        "globalCode": "COMMISSION",
-        "LastModifiedDate": "08/08/2020"
+        "LastModifiedDate": "05/18/2024",
+        "internalDescription": "Earnings metadata for HOUSE_RENT_ALLOWANCE",
+        "payType": "Earnings",
+        "country": "IN",
+        "vendorLabel": "VENDOR_E_3"
       }
     ],
-    "DEARNESS_ALLOWANCE": [
+    "BASIC_SALARY": [
       {
-        "globalCode": "TRAVEL_ALLOWANCE",
-        "LastModifiedDate": "04/10/2024"
+        "globalCode": "BASIC",
+        "LastModifiedDate": "05/01/2024",
+        "internalDescription": "Earnings metadata for BASIC",
+        "payType": "Earnings",
+        "country": "IN",
+        "vendorLabel": "VENDOR_E_1"
       },
       {
-        "globalCode": "TRAVEL_ALLOWANCE",
-        "LastModifiedDate": "10/08/2020"
+        "globalCode": "ARREAR_PAY",
+        "LastModifiedDate": "05/24/2024",
+        "internalDescription": "Earnings metadata for ARREAR_PAY",
+        "payType": "Earnings",
+        "country": "IN",
+        "vendorLabel": "VENDOR_E_4"
       },
       {
-        "globalCode": "TRAVEL_ALLOWANCE",
-        "LastModifiedDate": "02/25/2020"
-      }
-    ],
-    "SHIFT_ALLOWANCE": [
-      {
-        "globalCode": "EMPLOYER_PF",
-        "LastModifiedDate": "01/01/2022"
+        "globalCode": "BASIC_PAY",
+        "LastModifiedDate": "08/06/2024",
+        "internalDescription": "Conflict row for BASIC_PAY",
+        "internal1Description":"VERY IMPORTANT HIGH PRIORITY",
+        "payType": "Earning",
+        "country": "US",
+        "vendorLabel": "CONFLICT_E_1",
+        "notes": "Deterministic test row"
       },
       {
-        "globalCode": "LEAVE",
-        "LastModifiedDate": "06/04/2023"
+        "globalCode": "BASIC_PAY",
+        "LastModifiedDate": "08/13/2024",
+        "internalDescription": "Conflict row for BASIC_PAY",
+        "internal2Description":"VERY IMPORTANT HIGH PRIORITY",
+        "payType": "Earning",
+        "country": "IN",
+        "vendorLabel": "CONFLICT_E_2",
+        "notes": "Deterministic test row"
       },
       {
-        "globalCode": "SPECIAL_PAY",
-        "LastModifiedDate": "05/22/2024"
+        "globalCode": "REGULAR_PAY",
+        "LastModifiedDate": "08/03/2024",
+        "internalDescription": "Conflict row for REGULAR_PAY",
+        "payType": "Earning",
+        "country": "IN",
+        "vendorLabel": "CONFLICT_E_3",
+        "notes": "Deterministic test row"
       },
       {
-        "globalCode": "INS_PREMIUM",
-        "LastModifiedDate": "07/25/2020"
-      },
-      {
-        "globalCode": "INS_PREMIUM",
-        "LastModifiedDate": "11/06/2023"
-      },
-      {
-        "globalCode": "LEAVE",
-        "LastModifiedDate": "06/17/2020"
-      },
-      {
-        "globalCode": "ESIC",
-        "LastModifiedDate": "04/21/2021"
+        "globalCode": "SALARY",
+        "LastModifiedDate": "08/19/2024",
+        "internalDescription": "Conflict row for SALARY",
+        "payType": "Earning",
+        "country": "IN",
+        "vendorLabel": "CONFLICT_E_4",
+        "notes": "Deterministic test row"
       }
     ],
     "BONUS_PAYMENT": [
       {
-        "globalCode": "RETRO",
-        "LastModifiedDate": "09/25/2021"
+        "globalCode": "SALARY",
+        "LastModifiedDate": "05/05/2024",
+        "internalDescription": "Earnings metadata for SALARY",
+        "payType": "Earnings",
+        "country": "US",
+        "vendorLabel": "VENDOR_E_5"
       },
       {
-        "globalCode": "MED_ALLOW",
-        "LastModifiedDate": "10/16/2020"
+        "globalCode": "HOLIDAY_PAY",
+        "LastModifiedDate": "05/28/2024",
+        "internalDescription": "Earnings metadata for HOLIDAY_PAY",
+        "payType": "Earnings",
+        "country": "SG",
+        "vendorLabel": "VENDOR_E_3"
       },
       {
-        "globalCode": "NIGHT_SHIFT",
-        "LastModifiedDate": "10/01/2022"
+        "globalCode": "BONUS",
+        "LastModifiedDate": "08/09/2024",
+        "internalDescription": "Extra metadata for BONUS",
+        "payType": "Earning",
+        "country": "UK",
+        "vendorLabel": "EXTRA_ROW"
+      },
+      {
+        "globalCode": "PERFORMANCE_BONUS",
+        "LastModifiedDate": "09/02/2024",
+        "internalDescription": "Extra metadata for PERFORMANCE_BONUS",
+        "payType": "Earning",
+        "country": "UK",
+        "vendorLabel": "EXTRA_ROW"
+      },
+      {
+        "globalCode": "RETENTION_BONUS",
+        "LastModifiedDate": "07/30/2024",
+        "internalDescription": "Extra metadata for RETENTION_BONUS",
+        "payType": "Earning",
+        "country": "US",
+        "vendorLabel": "EXTRA_ROW"
       }
     ],
-    "LEAVE_ENCASHMENT": [
-      {
-        "globalCode": "VACATION_PAY",
-        "LastModifiedDate": "12/08/2021"
-      },
-      {
-        "globalCode": "VACATION_PAY",
-        "LastModifiedDate": "01/27/2024"
-      },
-      {
-        "globalCode": "SHIFT_PREMIUM",
-        "LastModifiedDate": "07/13/2024"
-      },
-      {
-        "globalCode": "OT",
-        "LastModifiedDate": "03/20/2020"
-      }
-    ],
-    "ARREAR_PAYMENT": [
-      {
-        "globalCode": "REGULAR_HOURS",
-        "LastModifiedDate": "06/28/2024"
-      }
-    ],
-    "RETRO_PAYMENT": [
-      {
-        "globalCode": "OVERTIME",
-        "LastModifiedDate": "10/08/2022"
-      },
-      {
-        "globalCode": "OVERTIME",
-        "LastModifiedDate": "04/16/2021"
-      },
-      {
-        "globalCode": "OVERTIME",
-        "LastModifiedDate": "08/26/2024"
-      }
-    ],
-    "SPECIAL_ALLOWANCE": [
-      {
-        "globalCode": "BASIC_REGULAR",
-        "LastModifiedDate": "05/08/2022"
-      },
-      {
-        "globalCode": "DA",
-        "LastModifiedDate": "08/16/2021"
-      },
-      {
-        "globalCode": "PROF_TAX",
-        "LastModifiedDate": "12/03/2020"
-      },
-      {
-        "globalCode": "SPECIAL_ALLOW",
-        "LastModifiedDate": "11/07/2021"
-      },
-      {
-        "globalCode": "EMPLOYER_PF",
-        "LastModifiedDate": "09/04/2021"
-      }
-    ],
-    "TRANSPORT_ALLOWANCE": [
-      {
-        "globalCode": "DEARNESS",
-        "LastModifiedDate": "09/20/2022"
-      },
-      {
-        "globalCode": "ESI",
-        "LastModifiedDate": "05/15/2022"
-      },
-      {
-        "globalCode": "ARREAR",
-        "LastModifiedDate": "08/22/2022"
-      },
-      {
-        "globalCode": "ADJUSTMENT",
-        "LastModifiedDate": "02/06/2023"
-      }
-    ],
-    "MEDICAL_ALLOWANCE": [
+    "CASH_ALLOWANCE": [
       {
         "globalCode": "HRA",
-        "LastModifiedDate": "08/09/2024"
+        "LastModifiedDate": "05/17/2024",
+        "internalDescription": "Earnings metadata for HRA",
+        "payType": "Earnings",
+        "country": "IN",
+        "vendorLabel": "VENDOR_E_2"
       },
       {
-        "globalCode": "MEDICAL",
-        "LastModifiedDate": "08/26/2023"
-      },
-      {
-        "globalCode": "MEDICAL",
-        "LastModifiedDate": "11/06/2021"
-      }
-    ],
-    "MISC_PAYROLL": [
-      {
-        "globalCode": "REG",
-        "LastModifiedDate": "04/13/2022"
-      },
-      {
-        "globalCode": "LEAVE",
-        "LastModifiedDate": "09/20/2024"
+        "globalCode": "BENEFIT_PAY",
+        "LastModifiedDate": "06/09/2024",
+        "internalDescription": "Earnings metadata for BENEFIT_PAY",
+        "payType": "Earnings",
+        "country": "IN",
+        "vendorLabel": "VENDOR_E_5"
       }
     ],
     "COMMISSION_PAY": [
       {
-        "globalCode": "OT",
-        "LastModifiedDate": "12/12/2022"
+        "globalCode": "FIXED_SALARY",
+        "LastModifiedDate": "05/06/2024",
+        "internalDescription": "Earnings metadata for FIXED_SALARY",
+        "payType": "Earnings",
+        "country": "IN",
+        "vendorLabel": "VENDOR_E_1"
+      },
+      {
+        "globalCode": "SUPPLEMENTAL_PAY",
+        "LastModifiedDate": "05/29/2024",
+        "internalDescription": "Earnings metadata for SUPPLEMENTAL_PAY",
+        "payType": "Earnings",
+        "country": "IN",
+        "vendorLabel": "VENDOR_E_4"
+      }
+    ],
+    "FLEX_ALLOWANCE": [
+      {
+        "globalCode": "ATTENDANCE_INCENTIVE",
+        "LastModifiedDate": "05/22/2024",
+        "internalDescription": "Earnings metadata for ATTENDANCE_INCENTIVE",
+        "payType": "Earnings",
+        "country": "SG",
+        "vendorLabel": "VENDOR_E_2"
+      }
+    ],
+    "HRA": [
+      {
+        "globalCode": "OVERTIME",
+        "LastModifiedDate": "05/07/2024",
+        "internalDescription": "Earnings metadata for OVERTIME",
+        "payType": "Earnings",
+        "country": "SG",
+        "vendorLabel": "VENDOR_E_2"
+      },
+      {
+        "globalCode": "VARIABLE_PAY",
+        "LastModifiedDate": "05/30/2024",
+        "internalDescription": "Earnings metadata for VARIABLE_PAY",
+        "payType": "Earnings",
+        "country": "US",
+        "vendorLabel": "VENDOR_E_5"
+      }
+    ],
+    "INCENTIVE_PAY": [
+      {
+        "globalCode": "COMMISSION",
+        "LastModifiedDate": "05/15/2024",
+        "internalDescription": "Earnings metadata for COMMISSION",
+        "payType": "Earnings",
+        "country": "US",
+        "vendorLabel": "VENDOR_E_5"
+      },
+      {
+        "globalCode": "CASH_ALLOWANCE",
+        "LastModifiedDate": "06/07/2024",
+        "internalDescription": "Earnings metadata for CASH_ALLOWANCE",
+        "payType": "Earnings",
+        "country": "IN",
+        "vendorLabel": "VENDOR_E_3"
+      }
+    ],
+    "LEAVE_ENCASHMENT": [
+      {
+        "globalCode": "BONUS",
+        "LastModifiedDate": "05/11/2024",
+        "internalDescription": "Earnings metadata for BONUS",
+        "payType": "Earnings",
+        "country": "IN",
+        "vendorLabel": "VENDOR_E_1"
+      },
+      {
+        "globalCode": "SALES_INCENTIVE",
+        "LastModifiedDate": "06/03/2024",
+        "internalDescription": "Earnings metadata for SALES_INCENTIVE",
+        "payType": "Earnings",
+        "country": "IN",
+        "vendorLabel": "VENDOR_E_4"
+      }
+    ],
+    "MEAL_ALLOWANCE": [
+      {
+        "globalCode": "SHIFT_ALLOWANCE",
+        "LastModifiedDate": "05/09/2024",
+        "internalDescription": "Earnings metadata for SHIFT_ALLOWANCE",
+        "payType": "Earnings",
+        "country": "IN",
+        "vendorLabel": "VENDOR_E_4"
+      },
+      {
+        "globalCode": "PLANT_ALLOWANCE",
+        "LastModifiedDate": "06/01/2024",
+        "internalDescription": "Earnings metadata for PLANT_ALLOWANCE",
+        "payType": "Earnings",
+        "country": "IN",
+        "vendorLabel": "VENDOR_E_2"
+      }
+    ],
+    "NIGHT_SHIFT_ALLOWANCE": [
+      {
+        "globalCode": "REGULAR_HOURS",
+        "LastModifiedDate": "05/04/2024",
+        "internalDescription": "Earnings metadata for REGULAR_HOURS",
+        "payType": "Earnings",
+        "country": "IN",
+        "vendorLabel": "VENDOR_E_4"
+      },
+      {
+        "globalCode": "VACATION_PAY",
+        "LastModifiedDate": "05/27/2024",
+        "internalDescription": "Earnings metadata for VACATION_PAY",
+        "payType": "Earnings",
+        "country": "IN",
+        "vendorLabel": "VENDOR_E_2"
+      }
+    ],
+    "OVERTIME_PAY": [
+      {
+        "globalCode": "BASIC_PAY",
+        "LastModifiedDate": "05/02/2024",
+        "internalDescription": "Earnings metadata for BASIC_PAY",
+        "payType": "Earnings",
+        "country": "SG",
+        "vendorLabel": "VENDOR_E_2"
+      },
+      {
+        "globalCode": "RETRO_PAY",
+        "LastModifiedDate": "05/25/2024",
+        "internalDescription": "Earnings metadata for RETRO_PAY",
+        "payType": "Earnings",
+        "country": "IN",
+        "vendorLabel": "VENDOR_E_5"
+      },
+      {
+        "globalCode": "OVERTIME",
+        "LastModifiedDate": "08/02/2024",
+        "internalDescription": "Conflict row for OVERTIME",
+        "payType": "Earning",
+        "country": "IN",
+        "vendorLabel": "CONFLICT_E_1",
+        "notes": "Deterministic test row"
+      },
+      {
+        "globalCode": "OVERTIME",
+        "LastModifiedDate": "08/11/2024",
+        "internalDescription": "Conflict row for OVERTIME",
+        "payType": "Earning",
+        "country": "IN",
+        "vendorLabel": "CONFLICT_E_2",
+        "notes": "Deterministic test row"
+      },
+      {
+        "globalCode": "OVERTIME_PAY",
+        "LastModifiedDate": "08/23/2024",
+        "internalDescription": "Conflict row for OVERTIME_PAY",
+        "payType": "Earning",
+        "country": "US",
+        "vendorLabel": "CONFLICT_E_3",
+        "notes": "Deterministic test row"
       },
       {
         "globalCode": "SHIFT_PREMIUM",
-        "LastModifiedDate": "05/04/2021"
+        "LastModifiedDate": "08/07/2024",
+        "internalDescription": "Conflict row for SHIFT_PREMIUM",
+        "payType": "Earning",
+        "country": "IN",
+        "vendorLabel": "CONFLICT_E_4",
+        "notes": "Deterministic test row"
+      }
+    ],
+    "PERFORMANCE_BONUS": [
+      {
+        "globalCode": "MEAL_ALLOWANCE",
+        "LastModifiedDate": "05/20/2024",
+        "internalDescription": "Earnings metadata for MEAL_ALLOWANCE",
+        "payType": "Earnings",
+        "country": "IN",
+        "vendorLabel": "VENDOR_E_5"
+      }
+    ],
+    "PROJECT_BONUS": [
+      {
+        "globalCode": "TRANSPORT_ALLOWANCE",
+        "LastModifiedDate": "05/19/2024",
+        "internalDescription": "Earnings metadata for TRANSPORT_ALLOWANCE",
+        "payType": "Earnings",
+        "country": "US",
+        "vendorLabel": "VENDOR_E_4"
       },
       {
-        "globalCode": "ESIC",
-        "LastModifiedDate": "07/18/2024"
+        "globalCode": "PROJECT_BONUS",
+        "LastModifiedDate": "08/04/2024",
+        "internalDescription": "Conflict row for PROJECT_BONUS",
+        "payType": "Earning",
+        "country": "US",
+        "vendorLabel": "CONFLICT_E_1",
+        "notes": "Deterministic test row"
       },
       {
-        "globalCode": "LOAN",
-        "LastModifiedDate": "11/20/2023"
+        "globalCode": "BONUS",
+        "LastModifiedDate": "08/14/2024",
+        "internalDescription": "Conflict row for BONUS",
+        "payType": "Earning",
+        "country": "IN",
+        "vendorLabel": "CONFLICT_E_2",
+        "notes": "Deterministic test row"
       },
       {
-        "globalCode": "COMMISSION",
-        "LastModifiedDate": "03/04/2023"
+        "globalCode": "PERFORMANCE_BONUS",
+        "LastModifiedDate": "08/22/2024",
+        "internalDescription": "Conflict row for PERFORMANCE_BONUS",
+        "payType": "Earning",
+        "country": "IN",
+        "vendorLabel": "CONFLICT_E_3",
+        "notes": "Deterministic test row"
+      }
+    ],
+    "REFERRAL_BONUS": [
+      {
+        "globalCode": "REMOTE_ALLOWANCE",
+        "LastModifiedDate": "05/21/2024",
+        "internalDescription": "Earnings metadata for REMOTE_ALLOWANCE",
+        "payType": "Earnings",
+        "country": "SG",
+        "vendorLabel": "VENDOR_E_1"
+      }
+    ],
+    "REMOTE_HOME_STIPEND": [
+      {
+        "globalCode": "NIGHT_SHIFT_ALLOWANCE",
+        "LastModifiedDate": "05/10/2024",
+        "internalDescription": "Earnings metadata for NIGHT_SHIFT_ALLOWANCE",
+        "payType": "Earnings",
+        "country": "SG",
+        "vendorLabel": "VENDOR_E_5"
       },
       {
-        "globalCode": "LOAN",
-        "LastModifiedDate": "07/21/2021"
+        "globalCode": "PROJECT_BONUS",
+        "LastModifiedDate": "06/02/2024",
+        "internalDescription": "Earnings metadata for PROJECT_BONUS",
+        "payType": "Earnings",
+        "country": "IN",
+        "vendorLabel": "VENDOR_E_3"
+      },
+      {
+        "globalCode": "REMOTE_ALLOWANCE",
+        "LastModifiedDate": "08/05/2024",
+        "internalDescription": "Conflict row for REMOTE_ALLOWANCE",
+        "payType": "Earning",
+        "country": "IN",
+        "vendorLabel": "CONFLICT_E_1",
+        "notes": "Deterministic test row"
+      },
+      {
+        "globalCode": "REMOTE_ALLOWANCE",
+        "LastModifiedDate": "08/16/2024",
+        "internalDescription": "Conflict row for REMOTE_ALLOWANCE",
+        "payType": "Earning",
+        "country": "US",
+        "vendorLabel": "CONFLICT_E_2",
+        "notes": "Deterministic test row"
+      },
+      {
+        "globalCode": "FLEX_ALLOWANCE",
+        "LastModifiedDate": "08/09/2024",
+        "internalDescription": "Conflict row for FLEX_ALLOWANCE",
+        "payType": "Earning",
+        "country": "US",
+        "vendorLabel": "CONFLICT_E_3",
+        "notes": "Deterministic test row"
+      }
+    ],
+    "RETRO_PAYMENT": [
+      {
+        "globalCode": "RETENTION_BONUS",
+        "LastModifiedDate": "05/13/2024",
+        "internalDescription": "Earnings metadata for RETENTION_BONUS",
+        "payType": "Earnings",
+        "country": "SG",
+        "vendorLabel": "VENDOR_E_3"
+      },
+      {
+        "globalCode": "SHIFT_PREMIUM",
+        "LastModifiedDate": "06/05/2024",
+        "internalDescription": "Earnings metadata for SHIFT_PREMIUM",
+        "payType": "Earnings",
+        "country": "US",
+        "vendorLabel": "VENDOR_E_1"
+      }
+    ],
+    "SHIFT_ALLOWANCE": [
+      {
+        "globalCode": "REGULAR_PAY",
+        "LastModifiedDate": "05/03/2024",
+        "internalDescription": "Earnings metadata for REGULAR_PAY",
+        "payType": "Earnings",
+        "country": "IN",
+        "vendorLabel": "VENDOR_E_3"
+      },
+      {
+        "globalCode": "LEAVE_ENCASHMENT",
+        "LastModifiedDate": "05/26/2024",
+        "internalDescription": "Earnings metadata for LEAVE_ENCASHMENT",
+        "payType": "Earnings",
+        "country": "US",
+        "vendorLabel": "VENDOR_E_1"
+      }
+    ],
+    "SPECIAL_ALLOWANCE": [
+      {
+        "globalCode": "INCENTIVE",
+        "LastModifiedDate": "05/14/2024",
+        "internalDescription": "Earnings metadata for INCENTIVE",
+        "payType": "Earnings",
+        "country": "SG",
+        "vendorLabel": "VENDOR_E_4"
+      },
+      {
+        "globalCode": "ADJUSTMENT_PAY",
+        "LastModifiedDate": "06/06/2024",
+        "internalDescription": "Earnings metadata for ADJUSTMENT_PAY",
+        "payType": "Earnings",
+        "country": "SG",
+        "vendorLabel": "VENDOR_E_2"
+      }
+    ],
+    "SUPPLEMENTAL_PAY": [
+      {
+        "globalCode": "REIMBURSEMENT",
+        "LastModifiedDate": "05/23/2024",
+        "internalDescription": "Earnings metadata for REIMBURSEMENT",
+        "payType": "Earnings",
+        "country": "SG",
+        "vendorLabel": "VENDOR_E_3"
+      }
+    ],
+    "TRANSPORT_ALLOWANCE": [
+      {
+        "globalCode": "OVERTIME_PAY",
+        "LastModifiedDate": "05/08/2024",
+        "internalDescription": "Earnings metadata for OVERTIME_PAY",
+        "payType": "Earnings",
+        "country": "IN",
+        "vendorLabel": "VENDOR_E_3"
+      },
+      {
+        "globalCode": "FLEX_ALLOWANCE",
+        "LastModifiedDate": "05/31/2024",
+        "internalDescription": "Earnings metadata for FLEX_ALLOWANCE",
+        "payType": "Earnings",
+        "country": "SG",
+        "vendorLabel": "VENDOR_E_1"
+      }
+    ],
+    "VARIABLE_PAY": [
+      {
+        "globalCode": "SPECIAL_ALLOWANCE",
+        "LastModifiedDate": "05/16/2024",
+        "internalDescription": "Earnings metadata for SPECIAL_ALLOWANCE",
+        "payType": "Earnings",
+        "country": "IN",
+        "vendorLabel": "VENDOR_E_1"
+      },
+      {
+        "globalCode": "COMPENSATION_PAY",
+        "LastModifiedDate": "06/08/2024",
+        "internalDescription": "Earnings metadata for COMPENSATION_PAY",
+        "payType": "Earnings",
+        "country": "US",
+        "vendorLabel": "VENDOR_E_4"
       }
     ]
   },
   "Deductions": {
-    "PF_DEDUCTION": [
+    "ADVANCE_RECOVERY": [
       {
-        "globalCode": "ADVANCE",
-        "LastModifiedDate": "03/14/2021"
+        "globalCode": "ESI",
+        "LastModifiedDate": "06/04/2024",
+        "internalDescription": "Deductions metadata for ESI",
+        "payType": "Deduction",
+        "country": "IN",
+        "vendorLabel": "VENDOR_D_4"
       },
       {
-        "globalCode": "OTHER_EARNINGS",
-        "LastModifiedDate": "09/02/2022"
+        "globalCode": "LEAVE_DEDUCTION",
+        "LastModifiedDate": "06/22/2024",
+        "internalDescription": "Deductions metadata for LEAVE_DEDUCTION",
+        "payType": "Deduction",
+        "country": "UK",
+        "vendorLabel": "VENDOR_D_2"
       },
       {
-        "globalCode": "ADVANCE",
-        "LastModifiedDate": "09/13/2024"
+        "globalCode": "ADVANCE_RECOVERY",
+        "LastModifiedDate": "08/05/2024",
+        "internalDescription": "Conflict row for ADVANCE_RECOVERY",
+        "payType": "Deduction",
+        "country": "US",
+        "vendorLabel": "CONFLICT_D_1",
+        "notes": "Deterministic test row"
+      },
+      {
+        "globalCode": "LOAN_RECOVERY",
+        "LastModifiedDate": "08/17/2024",
+        "internalDescription": "Conflict row for LOAN_RECOVERY",
+        "payType": "Deduction",
+        "country": "US",
+        "vendorLabel": "CONFLICT_D_2",
+        "notes": "Deterministic test row"
+      },
+      {
+        "globalCode": "DEDUCTION_LOAN",
+        "LastModifiedDate": "08/25/2024",
+        "internalDescription": "Conflict row for DEDUCTION_LOAN",
+        "payType": "Deduction",
+        "country": "IN",
+        "vendorLabel": "CONFLICT_D_3",
+        "notes": "Deterministic test row"
+      }
+    ],
+    "ASSET_RECOVERY": [
+      {
+        "globalCode": "SALARY_RECOVERY",
+        "LastModifiedDate": "06/15/2024",
+        "internalDescription": "Deductions metadata for SALARY_RECOVERY",
+        "payType": "Deduction",
+        "country": "IN",
+        "vendorLabel": "VENDOR_D_3"
+      }
+    ],
+    "CHILD_SUPPORT": [
+      {
+        "globalCode": "STATUTORY_DEDUCTION",
+        "LastModifiedDate": "06/12/2024",
+        "internalDescription": "Deductions metadata for STATUTORY_DEDUCTION",
+        "payType": "Deduction",
+        "country": "UK",
+        "vendorLabel": "VENDOR_D_4"
+      },
+      {
+        "globalCode": "CHILD_SUPPORT",
+        "LastModifiedDate": "06/30/2024",
+        "internalDescription": "Deductions metadata for CHILD_SUPPORT",
+        "payType": "Deduction",
+        "country": "US",
+        "vendorLabel": "VENDOR_D_2"
+      }
+    ],
+    "DEDUCTION_ADJUSTMENT": [
+      {
+        "globalCode": "NPS_DEDUCTION",
+        "LastModifiedDate": "06/18/2024",
+        "internalDescription": "Deductions metadata for NPS_DEDUCTION",
+        "payType": "Deduction",
+        "country": "IN",
+        "vendorLabel": "VENDOR_D_2"
       }
     ],
     "ESI_DEDUCTION": [
       {
-        "globalCode": "VACATION_PAY",
-        "LastModifiedDate": "05/19/2024"
-      }
-    ],
-    "LOAN_RECOVERY": [
-      {
-        "globalCode": "MEAL_ALLOWANCE",
-        "LastModifiedDate": "01/06/2021"
+        "globalCode": "PROVIDENT_FUND",
+        "LastModifiedDate": "06/02/2024",
+        "internalDescription": "Deductions metadata for PROVIDENT_FUND",
+        "payType": "Deduction",
+        "country": "US",
+        "vendorLabel": "VENDOR_D_2"
       },
       {
-        "globalCode": "MEAL_ALLOWANCE",
-        "LastModifiedDate": "09/12/2021"
+        "globalCode": "GRP_INSURANCE",
+        "LastModifiedDate": "06/20/2024",
+        "internalDescription": "Deductions metadata for GRP_INSURANCE",
+        "payType": "Deduction",
+        "country": "US",
+        "vendorLabel": "VENDOR_D_4"
+      }
+    ],
+    "FOOD_DEDUCTION": [
+      {
+        "globalCode": "UNION_DUES",
+        "LastModifiedDate": "06/13/2024",
+        "internalDescription": "Deductions metadata for UNION_DUES",
+        "payType": "Deduction",
+        "country": "US",
+        "vendorLabel": "VENDOR_D_1"
+      }
+    ],
+    "GARNISHMENT": [
+      {
+        "globalCode": "RETIREMENT_DEDUCTION",
+        "LastModifiedDate": "06/17/2024",
+        "internalDescription": "Deductions metadata for RETIREMENT_DEDUCTION",
+        "payType": "Deduction",
+        "country": "UK",
+        "vendorLabel": "VENDOR_D_1"
       }
     ],
     "INSURANCE_DEDUCTION": [
       {
-        "globalCode": "STAT_BONUS",
-        "LastModifiedDate": "03/04/2020"
+        "globalCode": "HEALTH_INSURANCE",
+        "LastModifiedDate": "06/06/2024",
+        "internalDescription": "Deductions metadata for HEALTH_INSURANCE",
+        "payType": "Deduction",
+        "country": "UK",
+        "vendorLabel": "VENDOR_D_2"
       },
       {
-        "globalCode": "MISC",
-        "LastModifiedDate": "11/06/2020"
+        "globalCode": "NOTICE_PERIOD_RECOVERY",
+        "LastModifiedDate": "06/24/2024",
+        "internalDescription": "Deductions metadata for NOTICE_PERIOD_RECOVERY",
+        "payType": "Deduction",
+        "country": "UK",
+        "vendorLabel": "VENDOR_D_4"
       },
       {
-        "globalCode": "STAT_DEDUCTION",
-        "LastModifiedDate": "10/22/2020"
+        "globalCode": "HEALTH_INSURANCE",
+        "LastModifiedDate": "08/10/2024",
+        "internalDescription": "Extra metadata for HEALTH_INSURANCE",
+        "payType": "Deduction",
+        "country": "UK",
+        "vendorLabel": "EXTRA_ROW"
       },
       {
-        "globalCode": "STAT_BONUS",
-        "LastModifiedDate": "10/09/2022"
+        "globalCode": "GRP_INSURANCE",
+        "LastModifiedDate": "09/10/2024",
+        "internalDescription": "Extra metadata for GRP_INSURANCE",
+        "payType": "Deduction",
+        "country": "SG",
+        "vendorLabel": "EXTRA_ROW"
       }
     ],
-    "ADVANCE_RECOVERY": [
+    "LOAN_RECOVERY": [
       {
-        "globalCode": "SHIFT",
-        "LastModifiedDate": "06/19/2022"
+        "globalCode": "EMPLOYEE_PF",
+        "LastModifiedDate": "06/03/2024",
+        "internalDescription": "Deductions metadata for EMPLOYEE_PF",
+        "payType": "Deduction",
+        "country": "US",
+        "vendorLabel": "VENDOR_D_3"
+      },
+      {
+        "globalCode": "FSA_DEDUCTION",
+        "LastModifiedDate": "06/21/2024",
+        "internalDescription": "Deductions metadata for FSA_DEDUCTION",
+        "payType": "Deduction",
+        "country": "IN",
+        "vendorLabel": "VENDOR_D_1"
+      }
+    ],
+    "MEDICAL_DEDUCTION": [
+      {
+        "globalCode": "EMPLOYEE_ESI",
+        "LastModifiedDate": "06/05/2024",
+        "internalDescription": "Deductions metadata for EMPLOYEE_ESI",
+        "payType": "Deduction",
+        "country": "UK",
+        "vendorLabel": "VENDOR_D_1"
+      },
+      {
+        "globalCode": "ASSET_RECOVERY",
+        "LastModifiedDate": "06/23/2024",
+        "internalDescription": "Deductions metadata for ASSET_RECOVERY",
+        "payType": "Deduction",
+        "country": "UK",
+        "vendorLabel": "VENDOR_D_3"
+      },
+      {
+        "globalCode": "MEDICAL_PREMIUM",
+        "LastModifiedDate": "08/06/2024",
+        "internalDescription": "Conflict row for MEDICAL_PREMIUM",
+        "payType": "Deduction",
+        "country": "US",
+        "vendorLabel": "CONFLICT_D_1",
+        "notes": "Deterministic test row"
+      },
+      {
+        "globalCode": "HEALTH_INSURANCE",
+        "LastModifiedDate": "08/12/2024",
+        "internalDescription": "Conflict row for HEALTH_INSURANCE",
+        "payType": "Deduction",
+        "country": "US",
+        "vendorLabel": "CONFLICT_D_2",
+        "notes": "Deterministic test row"
+      },
+      {
+        "globalCode": "FSA_DEDUCTION",
+        "LastModifiedDate": "08/21/2024",
+        "internalDescription": "Conflict row for FSA_DEDUCTION",
+        "payType": "Deduction",
+        "country": "US",
+        "vendorLabel": "CONFLICT_D_3",
+        "notes": "Deterministic test row"
+      }
+    ],
+    "NOTICE_PERIOD_RECOVERY": [
+      {
+        "globalCode": "OVERPAYMENT_RECOVERY",
+        "LastModifiedDate": "06/16/2024",
+        "internalDescription": "Deductions metadata for OVERPAYMENT_RECOVERY",
+        "payType": "Deduction",
+        "country": "UK",
+        "vendorLabel": "VENDOR_D_4"
+      }
+    ],
+    "NPS_DEDUCTION": [
+      {
+        "globalCode": "TAX_DEDUCTION",
+        "LastModifiedDate": "06/11/2024",
+        "internalDescription": "Deductions metadata for TAX_DEDUCTION",
+        "payType": "Deduction",
+        "country": "US",
+        "vendorLabel": "VENDOR_D_3"
+      },
+      {
+        "globalCode": "DEDUCTION_ADJUSTMENT",
+        "LastModifiedDate": "06/29/2024",
+        "internalDescription": "Deductions metadata for DEDUCTION_ADJUSTMENT",
+        "payType": "Deduction",
+        "country": "UK",
+        "vendorLabel": "VENDOR_D_1"
+      }
+    ],
+    "OVERPAYMENT_RECOVERY": [
+      {
+        "globalCode": "LOAN_RECOVERY",
+        "LastModifiedDate": "06/09/2024",
+        "internalDescription": "Deductions metadata for LOAN_RECOVERY",
+        "payType": "Deduction",
+        "country": "US",
+        "vendorLabel": "VENDOR_D_1"
+      },
+      {
+        "globalCode": "ATTENDANCE_DEDUCTION",
+        "LastModifiedDate": "06/27/2024",
+        "internalDescription": "Deductions metadata for ATTENDANCE_DEDUCTION",
+        "payType": "Deduction",
+        "country": "UK",
+        "vendorLabel": "VENDOR_D_3"
+      }
+    ],
+    "PF_DEDUCTION": [
+      {
+        "globalCode": "PF",
+        "LastModifiedDate": "06/01/2024",
+        "internalDescription": "Deductions metadata for PF",
+        "payType": "Deduction",
+        "country": "US",
+        "vendorLabel": "VENDOR_D_1"
+      },
+      {
+        "globalCode": "LIFE_INSURANCE",
+        "LastModifiedDate": "06/19/2024",
+        "internalDescription": "Deductions metadata for LIFE_INSURANCE",
+        "payType": "Deduction",
+        "country": "US",
+        "vendorLabel": "VENDOR_D_3"
       },
       {
         "globalCode": "PF",
-        "LastModifiedDate": "11/17/2022"
+        "LastModifiedDate": "08/03/2024",
+        "internalDescription": "Conflict row for PF",
+        "payType": "Deduction",
+        "country": "IN",
+        "vendorLabel": "CONFLICT_D_1",
+        "notes": "Deterministic test row"
       },
       {
-        "globalCode": "LOAN_DEDUCTION",
-        "LastModifiedDate": "04/10/2023"
+        "globalCode": "PROVIDENT_FUND",
+        "LastModifiedDate": "08/15/2024",
+        "internalDescription": "Conflict row for PROVIDENT_FUND",
+        "payType": "Deduction",
+        "country": "US",
+        "vendorLabel": "CONFLICT_D_2",
+        "notes": "Deterministic test row"
       },
       {
-        "globalCode": "ADV_RECOVERY",
-        "LastModifiedDate": "10/01/2024"
+        "globalCode": "EMPLOYEE_PF",
+        "LastModifiedDate": "08/20/2024",
+        "internalDescription": "Conflict row for EMPLOYEE_PF",
+        "payType": "Deduction",
+        "country": "US",
+        "vendorLabel": "CONFLICT_D_3",
+        "notes": "Deterministic test row"
       },
       {
-        "globalCode": "INCENTIVE",
-        "LastModifiedDate": "03/03/2021"
+        "globalCode": "STATUTORY_DEDUCTION",
+        "LastModifiedDate": "08/08/2024",
+        "internalDescription": "Conflict row for STATUTORY_DEDUCTION",
+        "payType": "Deduction",
+        "country": "IN",
+        "vendorLabel": "CONFLICT_D_4",
+        "notes": "Deterministic test row"
+      }
+    ],
+    "RETIREMENT_DEDUCTION": [
+      {
+        "globalCode": "ADVANCE_RECOVERY",
+        "LastModifiedDate": "06/10/2024",
+        "internalDescription": "Deductions metadata for ADVANCE_RECOVERY",
+        "payType": "Deduction",
+        "country": "US",
+        "vendorLabel": "VENDOR_D_2"
       },
       {
-        "globalCode": "ADV_RECOVERY",
-        "LastModifiedDate": "06/07/2022"
+        "globalCode": "PENALTY_DEDUCTION",
+        "LastModifiedDate": "06/28/2024",
+        "internalDescription": "Deductions metadata for PENALTY_DEDUCTION",
+        "payType": "Deduction",
+        "country": "US",
+        "vendorLabel": "VENDOR_D_4"
+      }
+    ],
+    "SALARY_RECOVERY": [
+      {
+        "globalCode": "DEDUCTION_LOAN",
+        "LastModifiedDate": "06/08/2024",
+        "internalDescription": "Deductions metadata for DEDUCTION_LOAN",
+        "payType": "Deduction",
+        "country": "UK",
+        "vendorLabel": "VENDOR_D_4"
       },
       {
-        "globalCode": "ADV_RECOVERY",
-        "LastModifiedDate": "11/09/2024"
+        "globalCode": "WELFARE_DEDUCTION",
+        "LastModifiedDate": "06/26/2024",
+        "internalDescription": "Deductions metadata for WELFARE_DEDUCTION",
+        "payType": "Deduction",
+        "country": "UK",
+        "vendorLabel": "VENDOR_D_2"
+      }
+    ],
+    "UNION_DUES": [
+      {
+        "globalCode": "MEDICAL_PREMIUM",
+        "LastModifiedDate": "06/07/2024",
+        "internalDescription": "Deductions metadata for MEDICAL_PREMIUM",
+        "payType": "Deduction",
+        "country": "US",
+        "vendorLabel": "VENDOR_D_3"
       },
       {
-        "globalCode": "ADJUSTMENT",
-        "LastModifiedDate": "06/23/2022"
-      },
+        "globalCode": "FOOD_DEDUCTION",
+        "LastModifiedDate": "06/25/2024",
+        "internalDescription": "Deductions metadata for FOOD_DEDUCTION",
+        "payType": "Deduction",
+        "country": "IN",
+        "vendorLabel": "VENDOR_D_1"
+      }
+    ],
+    "WELFARE_DEDUCTION": [
       {
-        "globalCode": "ARREAR",
-        "LastModifiedDate": "05/01/2020"
+        "globalCode": "GARNISHMENT",
+        "LastModifiedDate": "06/14/2024",
+        "internalDescription": "Deductions metadata for GARNISHMENT",
+        "payType": "Deduction",
+        "country": "UK",
+        "vendorLabel": "VENDOR_D_2"
       }
     ]
   },
   "Taxes": {
-    "PROFESSIONAL_TAX": [
+    "CAPITAL_GAINS_TAX": [
       {
-        "globalCode": "DEARNESS",
-        "LastModifiedDate": "10/16/2024"
+        "globalCode": "QUARTERLY_TAX",
+        "LastModifiedDate": "07/22/2024",
+        "internalDescription": "Taxes metadata for QUARTERLY_TAX",
+        "payType": "Tax",
+        "country": "US",
+        "vendorLabel": "VENDOR_T_2"
+      }
+    ],
+    "CESS_TAX": [
+      {
+        "globalCode": "PAYROLL_TAX",
+        "LastModifiedDate": "07/12/2024",
+        "internalDescription": "Taxes metadata for PAYROLL_TAX",
+        "payType": "Tax",
+        "country": "US",
+        "vendorLabel": "VENDOR_T_4"
+      }
+    ],
+    "DECLARATION_TAX": [
+      {
+        "globalCode": "ESTIMATED_TAX",
+        "LastModifiedDate": "07/21/2024",
+        "internalDescription": "Taxes metadata for ESTIMATED_TAX",
+        "payType": "Tax",
+        "country": "IN",
+        "vendorLabel": "VENDOR_T_1"
+      }
+    ],
+    "ENVIRONMENT_CESS": [
+      {
+        "globalCode": "SURCHARGE_TAX",
+        "LastModifiedDate": "07/19/2024",
+        "internalDescription": "Taxes metadata for SURCHARGE_TAX",
+        "payType": "Tax",
+        "country": "UK",
+        "vendorLabel": "VENDOR_T_3"
+      }
+    ],
+    "ESTIMATED_TAX": [
+      {
+        "globalCode": "DECLARATION_TAX",
+        "LastModifiedDate": "07/23/2024",
+        "internalDescription": "Taxes metadata for DECLARATION_TAX",
+        "payType": "Tax",
+        "country": "US",
+        "vendorLabel": "VENDOR_T_3"
+      }
+    ],
+    "EXCISE_DUTY": [
+      {
+        "globalCode": "TCS",
+        "LastModifiedDate": "07/16/2024",
+        "internalDescription": "Taxes metadata for TCS",
+        "payType": "Tax",
+        "country": "IN",
+        "vendorLabel": "VENDOR_T_4"
+      }
+    ],
+    "EXPORT_DUTY": [
+      {
+        "globalCode": "GST",
+        "LastModifiedDate": "07/18/2024",
+        "internalDescription": "Taxes metadata for GST",
+        "payType": "Tax",
+        "country": "US",
+        "vendorLabel": "VENDOR_T_2"
+      }
+    ],
+    "FEDERAL_TAX": [
+      {
+        "globalCode": "STATE_TAX",
+        "LastModifiedDate": "07/03/2024",
+        "internalDescription": "Taxes metadata for STATE_TAX",
+        "payType": "Tax",
+        "country": "US",
+        "vendorLabel": "VENDOR_T_3"
       },
       {
-        "globalCode": "DEARNESS",
-        "LastModifiedDate": "12/06/2022"
+        "globalCode": "IMPORT_DUTY",
+        "LastModifiedDate": "07/27/2024",
+        "internalDescription": "Taxes metadata for IMPORT_DUTY",
+        "payType": "Tax",
+        "country": "IN",
+        "vendorLabel": "VENDOR_T_3"
+      },
+      {
+        "globalCode": "FEDERAL_TAX",
+        "LastModifiedDate": "08/04/2024",
+        "internalDescription": "Conflict row for FEDERAL_TAX",
+        "payType": "Taxe",
+        "country": "US",
+        "vendorLabel": "CONFLICT_T_1",
+        "notes": "Deterministic test row"
+      },
+      {
+        "globalCode": "WITHHOLDING_TAX",
+        "LastModifiedDate": "08/16/2024",
+        "internalDescription": "Conflict row for WITHHOLDING_TAX",
+        "payType": "Taxe",
+        "country": "IN",
+        "vendorLabel": "CONFLICT_T_2",
+        "notes": "Deterministic test row"
+      },
+      {
+        "globalCode": "TAX_WITHHOLDING",
+        "LastModifiedDate": "08/27/2024",
+        "internalDescription": "Conflict row for TAX_WITHHOLDING",
+        "payType": "Taxe",
+        "country": "IN",
+        "vendorLabel": "CONFLICT_T_3",
+        "notes": "Deterministic test row"
+      }
+    ],
+    "GST_TAX": [
+      {
+        "globalCode": "TAX_WITHHOLDING",
+        "LastModifiedDate": "07/10/2024",
+        "internalDescription": "Taxes metadata for TAX_WITHHOLDING",
+        "payType": "Tax",
+        "country": "UK",
+        "vendorLabel": "VENDOR_T_2"
+      },
+      {
+        "globalCode": "GST",
+        "LastModifiedDate": "08/15/2024",
+        "internalDescription": "Extra metadata for GST",
+        "payType": "Taxe",
+        "country": "IN",
+        "vendorLabel": "EXTRA_ROW"
+      },
+      {
+        "globalCode": "SERVICE_TAX",
+        "LastModifiedDate": "07/20/2024",
+        "internalDescription": "Extra metadata for SERVICE_TAX",
+        "payType": "Taxe",
+        "country": "SG",
+        "vendorLabel": "EXTRA_ROW"
+      }
+    ],
+    "IMPORT_DUTY": [
+      {
+        "globalCode": "VAT",
+        "LastModifiedDate": "07/17/2024",
+        "internalDescription": "Taxes metadata for VAT",
+        "payType": "Tax",
+        "country": "IN",
+        "vendorLabel": "VENDOR_T_1"
+      }
+    ],
+    "INCOME_TAX": [
+      {
+        "globalCode": "FEDERAL_TAX",
+        "LastModifiedDate": "07/02/2024",
+        "internalDescription": "Taxes metadata for FEDERAL_TAX",
+        "payType": "Tax",
+        "country": "UK",
+        "vendorLabel": "VENDOR_T_2"
+      },
+      {
+        "globalCode": "EXCISE_TAX",
+        "LastModifiedDate": "07/26/2024",
+        "internalDescription": "Taxes metadata for EXCISE_TAX",
+        "payType": "Tax",
+        "country": "US",
+        "vendorLabel": "VENDOR_T_2"
+      },
+      {
+        "globalCode": "INCOME_TAX",
+        "LastModifiedDate": "08/02/2024",
+        "internalDescription": "Conflict row for INCOME_TAX",
+        "payType": "Taxe",
+        "country": "US",
+        "vendorLabel": "CONFLICT_T_1",
+        "notes": "Deterministic test row"
+      },
+      {
+        "globalCode": "FEDERAL_TAX",
+        "LastModifiedDate": "08/13/2024",
+        "internalDescription": "Conflict row for FEDERAL_TAX",
+        "payType": "Taxe",
+        "country": "US",
+        "vendorLabel": "CONFLICT_T_2",
+        "notes": "Deterministic test row"
+      },
+      {
+        "globalCode": "TDS",
+        "LastModifiedDate": "08/24/2024",
+        "internalDescription": "Conflict row for TDS",
+        "payType": "Taxe",
+        "country": "US",
+        "vendorLabel": "CONFLICT_T_3",
+        "notes": "Deterministic test row"
+      },
+      {
+        "globalCode": "TAX",
+        "LastModifiedDate": "09/01/2024",
+        "internalDescription": "Conflict row for TAX",
+        "payType": "Taxe",
+        "country": "US",
+        "vendorLabel": "CONFLICT_T_4",
+        "notes": "Deterministic test row"
+      }
+    ],
+    "LOCAL_TAX": [
+      {
+        "globalCode": "MUNICIPAL_TAX",
+        "LastModifiedDate": "07/05/2024",
+        "internalDescription": "Taxes metadata for MUNICIPAL_TAX",
+        "payType": "Tax",
+        "country": "UK",
+        "vendorLabel": "VENDOR_T_1"
+      },
+      {
+        "globalCode": "ENVIRONMENT_TAX",
+        "LastModifiedDate": "07/29/2024",
+        "internalDescription": "Taxes metadata for ENVIRONMENT_TAX",
+        "payType": "Tax",
+        "country": "IN",
+        "vendorLabel": "VENDOR_T_1"
+      }
+    ],
+    "MEDICARE_TAX": [
+      {
+        "globalCode": "INCOME_TAX",
+        "LastModifiedDate": "07/08/2024",
+        "internalDescription": "Taxes metadata for INCOME_TAX",
+        "payType": "Tax",
+        "country": "US",
+        "vendorLabel": "VENDOR_T_4"
+      }
+    ],
+    "MUNICIPAL_TAX": [
+      {
+        "globalCode": "SOCIAL_SECURITY_TAX",
+        "LastModifiedDate": "07/06/2024",
+        "internalDescription": "Taxes metadata for SOCIAL_SECURITY_TAX",
+        "payType": "Tax",
+        "country": "UK",
+        "vendorLabel": "VENDOR_T_2"
+      },
+      {
+        "globalCode": "STAMP_DUTY",
+        "LastModifiedDate": "07/30/2024",
+        "internalDescription": "Taxes metadata for STAMP_DUTY",
+        "payType": "Tax",
+        "country": "US",
+        "vendorLabel": "VENDOR_T_2"
+      }
+    ],
+    "PAYROLL_TAX": [
+      {
+        "globalCode": "CAPITAL_GAINS_TAX",
+        "LastModifiedDate": "07/24/2024",
+        "internalDescription": "Taxes metadata for CAPITAL_GAINS_TAX",
+        "payType": "Tax",
+        "country": "IN",
+        "vendorLabel": "VENDOR_T_4"
+      }
+    ],
+    "PROFESSIONAL_TAX": [
+      {
+        "globalCode": "TAX",
+        "LastModifiedDate": "07/01/2024",
+        "internalDescription": "Taxes metadata for TAX",
+        "payType": "Tax",
+        "country": "IN",
+        "vendorLabel": "VENDOR_T_1"
+      },
+      {
+        "globalCode": "PROPERTY_TAX",
+        "LastModifiedDate": "07/25/2024",
+        "internalDescription": "Taxes metadata for PROPERTY_TAX",
+        "payType": "Tax",
+        "country": "US",
+        "vendorLabel": "VENDOR_T_1"
+      },
+      {
+        "globalCode": "PROFESSIONAL_TAX",
+        "LastModifiedDate": "08/03/2024",
+        "internalDescription": "Conflict row for PROFESSIONAL_TAX",
+        "payType": "Taxe",
+        "country": "US",
+        "vendorLabel": "CONFLICT_T_1",
+        "notes": "Deterministic test row"
+      },
+      {
+        "globalCode": "TAX_DEDUCTION",
+        "LastModifiedDate": "08/10/2024",
+        "internalDescription": "Conflict row for TAX_DEDUCTION",
+        "payType": "Taxe",
+        "country": "IN",
+        "vendorLabel": "CONFLICT_T_2",
+        "notes": "Deterministic test row"
+      },
+      {
+        "globalCode": "WITHHOLDING_TAX",
+        "LastModifiedDate": "08/18/2024",
+        "internalDescription": "Conflict row for WITHHOLDING_TAX",
+        "payType": "Taxe",
+        "country": "US",
+        "vendorLabel": "CONFLICT_T_3",
+        "notes": "Deterministic test row"
+      }
+    ],
+    "PROPERTY_TAX": [
+      {
+        "globalCode": "TDS",
+        "LastModifiedDate": "07/15/2024",
+        "internalDescription": "Taxes metadata for TDS",
+        "payType": "Tax",
+        "country": "UK",
+        "vendorLabel": "VENDOR_T_3"
+      }
+    ],
+    "QUARTERLY_TAX": [
+      {
+        "globalCode": "CESS_TAX",
+        "LastModifiedDate": "07/20/2024",
+        "internalDescription": "Taxes metadata for CESS_TAX",
+        "payType": "Tax",
+        "country": "US",
+        "vendorLabel": "VENDOR_T_4"
+      }
+    ],
+    "SOCIAL_SECURITY_TAX": [
+      {
+        "globalCode": "MEDICARE_TAX",
+        "LastModifiedDate": "07/07/2024",
+        "internalDescription": "Taxes metadata for MEDICARE_TAX",
+        "payType": "Tax",
+        "country": "IN",
+        "vendorLabel": "VENDOR_T_3"
+      }
+    ],
+    "STAMP_DUTY": [
+      {
+        "globalCode": "PROFESSIONAL_TAX",
+        "LastModifiedDate": "07/14/2024",
+        "internalDescription": "Taxes metadata for PROFESSIONAL_TAX",
+        "payType": "Tax",
+        "country": "IN",
+        "vendorLabel": "VENDOR_T_2"
+      }
+    ],
+    "STATE_TAX": [
+      {
+        "globalCode": "LOCAL_TAX",
+        "LastModifiedDate": "07/04/2024",
+        "internalDescription": "Taxes metadata for LOCAL_TAX",
+        "payType": "Tax",
+        "country": "UK",
+        "vendorLabel": "VENDOR_T_4"
+      },
+      {
+        "globalCode": "EXPORT_DUTY",
+        "LastModifiedDate": "07/28/2024",
+        "internalDescription": "Taxes metadata for EXPORT_DUTY",
+        "payType": "Tax",
+        "country": "UK",
+        "vendorLabel": "VENDOR_T_4"
+      },
+      {
+        "globalCode": "STATE_TAX",
+        "LastModifiedDate": "10/01/2024",
+        "internalDescription": "Extra metadata for STATE_TAX",
+        "payType": "Taxe",
+        "country": "IN",
+        "vendorLabel": "EXTRA_ROW"
+      }
+    ],
+    "SURCHARGE_TAX": [
+      {
+        "globalCode": "SALES_TAX",
+        "LastModifiedDate": "07/13/2024",
+        "internalDescription": "Taxes metadata for SALES_TAX",
+        "payType": "Tax",
+        "country": "UK",
+        "vendorLabel": "VENDOR_T_1"
+      }
+    ],
+    "TDS_WITHHOLDING": [
+      {
+        "globalCode": "WITHHOLDING_TAX",
+        "LastModifiedDate": "07/09/2024",
+        "internalDescription": "Taxes metadata for WITHHOLDING_TAX",
+        "payType": "Tax",
+        "country": "IN",
+        "vendorLabel": "VENDOR_T_1"
+      }
+    ],
+    "VAT_TAX": [
+      {
+        "globalCode": "SERVICE_TAX",
+        "LastModifiedDate": "07/11/2024",
+        "internalDescription": "Taxes metadata for SERVICE_TAX",
+        "payType": "Tax",
+        "country": "US",
+        "vendorLabel": "VENDOR_T_3"
       }
     ]
   }
