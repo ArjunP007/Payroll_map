@@ -2,17 +2,22 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from datetime import datetime
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-from app.config import DatasetSource, PrecedenceMode
+from app.config import PAYROLL_CATEGORIES, DatasetSource, PayrollCategory, PrecedenceMode
+
+
+Metadata = Mapping[str, Any]
 
 
 class RawCandidateRecord(BaseModel):
     """One raw candidate object from the nested source JSON."""
 
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="allow")
 
     globalCode: str = Field(min_length=1)
     LastModifiedDate: str = Field(min_length=1)
@@ -23,11 +28,13 @@ class NormalizedRecord(BaseModel):
 
     model_config = ConfigDict(frozen=True)
 
+    category: PayrollCategory
     priorCode: str
     globalCode: str
     lastModifiedDate: datetime
     candidateIndex: int = Field(ge=0)
     globalIndex: int = Field(ge=0)
+    metadata: Metadata = Field(default_factory=dict)
 
 
 class MappingResult(BaseModel):
@@ -39,9 +46,38 @@ class MappingResult(BaseModel):
     globalCode: str
 
 
+class CategoryMappingResponse(BaseModel):
+    """Public EDT-grouped mapping response."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    Earnings: list[MappingResult] = Field(default_factory=list)
+    Deductions: list[MappingResult] = Field(default_factory=list)
+    Taxes: list[MappingResult] = Field(default_factory=list)
+
+    @classmethod
+    def empty(cls) -> "CategoryMappingResponse":
+        return cls()
+
+    @classmethod
+    def from_category_map(
+        cls,
+        values: Mapping[PayrollCategory, list[MappingResult]],
+    ) -> "CategoryMappingResponse":
+        payload = {category.value: list(values.get(category, [])) for category in PAYROLL_CATEGORIES}
+        return cls.model_validate(payload)
+
+    def as_category_map(self) -> dict[PayrollCategory, list[MappingResult]]:
+        return {
+            category: list(getattr(self, category.value))
+            for category in PAYROLL_CATEGORIES
+        }
+
+
 class MappingDecisionDetail(BaseModel):
     """Mapping audit detail. Never returned from public mapping endpoints."""
 
+    category: PayrollCategory
     priorCode: str
     winningCode: str
     mode: PrecedenceMode
@@ -71,6 +107,33 @@ class MappingRequest(BaseModel):
         if isinstance(value, str):
             return value.strip().upper()
         return value
+
+
+class BatchMappingRequest(BaseModel):
+    """Batch lookup request for known and unresolved prior codes."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    mode: PrecedenceMode
+    priorCodes: list[str] = Field(min_length=1)
+
+    @field_validator("mode", mode="before")
+    @classmethod
+    def normalize_mode(cls, value: str | PrecedenceMode) -> str | PrecedenceMode:
+        if isinstance(value, str):
+            return value.strip().upper()
+        return value
+
+    @field_validator("priorCodes")
+    @classmethod
+    def normalize_prior_codes(cls, values: list[str]) -> list[str]:
+        normalized: list[str] = []
+        for value in values:
+            code = str(value).strip().upper()
+            if not code:
+                raise ValueError("priorCodes cannot contain empty values")
+            normalized.append(code)
+        return normalized
 
 
 class ReloadRequest(BaseModel):
@@ -116,10 +179,12 @@ class ReloadResponse(BaseModel):
 
 
 class PriorCodesResponse(BaseModel):
-    """Admin response containing known prior codes in source order."""
+    """Admin response containing known prior codes in source order by EDT bucket."""
 
     totalPriorCodes: int
-    priorCodes: list[str]
+    Earnings: list[str] = Field(default_factory=list)
+    Deductions: list[str] = Field(default_factory=list)
+    Taxes: list[str] = Field(default_factory=list)
 
 
 class ErrorResponse(BaseModel):

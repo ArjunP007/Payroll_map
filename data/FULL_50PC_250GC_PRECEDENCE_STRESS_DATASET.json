@@ -1,350 +1,356 @@
 {
-  "BASIC_SALARY": [
-    {
-      "globalCode": "BONUS",
-      "LastModifiedDate": "10/23/2021"
-    },
-    {
-      "globalCode": "EMPLOYEE_PF",
-      "LastModifiedDate": "04/21/2023"
-    },
-    {
-      "globalCode": "LEAVE_ENCASH",
-      "LastModifiedDate": "08/12/2023"
-    },
-    {
-      "globalCode": "TRANSPORT",
-      "LastModifiedDate": "01/04/2024"
-    },
-    {
-      "globalCode": "MEDICAL",
-      "LastModifiedDate": "04/18/2023"
-    },
-    {
-      "globalCode": "ATTENDANCE_INCENTIVE",
-      "LastModifiedDate": "04/05/2024"
-    },
-    {
-      "globalCode": "SHIFT_PREMIUM",
-      "LastModifiedDate": "06/08/2020"
-    }
-  ],
-  "OVERTIME_PAY": [
-    {
-      "globalCode": "BASIC",
-      "LastModifiedDate": "05/17/2022"
-    },
-    {
-      "globalCode": "PERFORMANCE_BONUS",
-      "LastModifiedDate": "01/16/2023"
-    },
-    {
-      "globalCode": "PTAX",
-      "LastModifiedDate": "07/10/2021"
-    },
-    {
-      "globalCode": "SUPPLEMENTAL_PAY",
-      "LastModifiedDate": "10/28/2022"
-    }
-  ],
-  "HOUSE_ALLOWANCE": [
-    {
-      "globalCode": "BASE",
-      "LastModifiedDate": "08/14/2022"
-    },
-    {
-      "globalCode": "HOUSE_RENT_ALLOWANCE",
-      "LastModifiedDate": "07/14/2023"
-    },
-    {
-      "globalCode": "INSURANCE",
-      "LastModifiedDate": "05/28/2024"
-    },
-    {
-      "globalCode": "COMMISSION",
-      "LastModifiedDate": "08/08/2020"
-    }
-  ],
-  "DEARNESS_ALLOWANCE": [
-    {
-      "globalCode": "TRAVEL_ALLOWANCE",
-      "LastModifiedDate": "04/10/2024"
-    },
-    {
-      "globalCode": "TRAVEL_ALLOWANCE",
-      "LastModifiedDate": "10/08/2020"
-    },
-    {
-      "globalCode": "TRAVEL_ALLOWANCE",
-      "LastModifiedDate": "02/25/2020"
-    }
-  ],
-  "SHIFT_ALLOWANCE": [
-    {
-      "globalCode": "EMPLOYER_PF",
-      "LastModifiedDate": "01/01/2022"
-    },
-    {
-      "globalCode": "LEAVE",
-      "LastModifiedDate": "06/04/2023"
-    },
-    {
-      "globalCode": "SPECIAL_PAY",
-      "LastModifiedDate": "05/22/2024"
-    },
-    {
-      "globalCode": "INS_PREMIUM",
-      "LastModifiedDate": "07/25/2020"
-    },
-    {
-      "globalCode": "INS_PREMIUM",
-      "LastModifiedDate": "11/06/2023"
-    },
-    {
-      "globalCode": "LEAVE",
-      "LastModifiedDate": "06/17/2020"
-    },
-    {
-      "globalCode": "ESIC",
-      "LastModifiedDate": "04/21/2021"
-    }
-  ],
-  "BONUS_PAYMENT": [
-    {
-      "globalCode": "RETRO",
-      "LastModifiedDate": "09/25/2021"
-    },
-    {
-      "globalCode": "MED_ALLOW",
-      "LastModifiedDate": "10/16/2020"
-    },
-    {
-      "globalCode": "NIGHT_SHIFT",
-      "LastModifiedDate": "10/01/2022"
-    }
-  ],
-  "PROFESSIONAL_TAX": [
-    {
-      "globalCode": "DEARNESS",
-      "LastModifiedDate": "10/16/2024"
-    },
-    {
-      "globalCode": "DEARNESS",
-      "LastModifiedDate": "12/06/2022"
-    }
-  ],
-  "PF_DEDUCTION": [
-    {
-      "globalCode": "ADVANCE",
-      "LastModifiedDate": "03/14/2021"
-    },
-    {
-      "globalCode": "OTHER_EARNINGS",
-      "LastModifiedDate": "09/02/2022"
-    },
-    {
-      "globalCode": "ADVANCE",
-      "LastModifiedDate": "09/13/2024"
-    }
-  ],
-  "ESI_DEDUCTION": [
-    {
-      "globalCode": "VACATION_PAY",
-      "LastModifiedDate": "05/19/2024"
-    }
-  ],
-  "LOAN_RECOVERY": [
-    {
-      "globalCode": "MEAL_ALLOWANCE",
-      "LastModifiedDate": "01/06/2021"
-    },
-    {
-      "globalCode": "MEAL_ALLOWANCE",
-      "LastModifiedDate": "09/12/2021"
-    }
-  ],
-  "LEAVE_ENCASHMENT": [
-    {
-      "globalCode": "VACATION_PAY",
-      "LastModifiedDate": "12/08/2021"
-    },
-    {
-      "globalCode": "VACATION_PAY",
-      "LastModifiedDate": "01/27/2024"
-    },
-    {
-      "globalCode": "SHIFT_PREMIUM",
-      "LastModifiedDate": "07/13/2024"
-    },
-    {
-      "globalCode": "OT",
-      "LastModifiedDate": "03/20/2020"
-    }
-  ],
-  "ARREAR_PAYMENT": [
-    {
-      "globalCode": "REGULAR_HOURS",
-      "LastModifiedDate": "06/28/2024"
-    }
-  ],
-  "RETRO_PAYMENT": [
-    {
-      "globalCode": "OVERTIME",
-      "LastModifiedDate": "10/08/2022"
-    },
-    {
-      "globalCode": "OVERTIME",
-      "LastModifiedDate": "04/16/2021"
-    },
-    {
-      "globalCode": "OVERTIME",
-      "LastModifiedDate": "08/26/2024"
-    }
-  ],
-  "SPECIAL_ALLOWANCE": [
-    {
-      "globalCode": "BASIC_REGULAR",
-      "LastModifiedDate": "05/08/2022"
-    },
-    {
-      "globalCode": "DA",
-      "LastModifiedDate": "08/16/2021"
-    },
-    {
-      "globalCode": "PROF_TAX",
-      "LastModifiedDate": "12/03/2020"
-    },
-    {
-      "globalCode": "SPECIAL_ALLOW",
-      "LastModifiedDate": "11/07/2021"
-    },
-    {
-      "globalCode": "EMPLOYER_PF",
-      "LastModifiedDate": "09/04/2021"
-    }
-  ],
-  "TRANSPORT_ALLOWANCE": [
-    {
-      "globalCode": "DEARNESS",
-      "LastModifiedDate": "09/20/2022"
-    },
-    {
-      "globalCode": "ESI",
-      "LastModifiedDate": "05/15/2022"
-    },
-    {
-      "globalCode": "ARREAR",
-      "LastModifiedDate": "08/22/2022"
-    },
-    {
-      "globalCode": "ADJUSTMENT",
-      "LastModifiedDate": "02/06/2023"
-    }
-  ],
-  "MEDICAL_ALLOWANCE": [
-    {
-      "globalCode": "HRA",
-      "LastModifiedDate": "08/09/2024"
-    },
-    {
-      "globalCode": "MEDICAL",
-      "LastModifiedDate": "08/26/2023"
-    },
-    {
-      "globalCode": "MEDICAL",
-      "LastModifiedDate": "11/06/2021"
-    }
-  ],
-  "INSURANCE_DEDUCTION": [
-    {
-      "globalCode": "STAT_BONUS",
-      "LastModifiedDate": "03/04/2020"
-    },
-    {
-      "globalCode": "MISC",
-      "LastModifiedDate": "11/06/2020"
-    },
-    {
-      "globalCode": "STAT_DEDUCTION",
-      "LastModifiedDate": "10/22/2020"
-    },
-    {
-      "globalCode": "STAT_BONUS",
-      "LastModifiedDate": "10/09/2022"
-    }
-  ],
-  "ADVANCE_RECOVERY": [
-    {
-      "globalCode": "SHIFT",
-      "LastModifiedDate": "06/19/2022"
-    },
-    {
-      "globalCode": "PF",
-      "LastModifiedDate": "11/17/2022"
-    },
-    {
-      "globalCode": "LOAN_DEDUCTION",
-      "LastModifiedDate": "04/10/2023"
-    },
-    {
-      "globalCode": "ADV_RECOVERY",
-      "LastModifiedDate": "10/01/2024"
-    },
-    {
-      "globalCode": "INCENTIVE",
-      "LastModifiedDate": "03/03/2021"
-    },
-    {
-      "globalCode": "ADV_RECOVERY",
-      "LastModifiedDate": "06/07/2022"
-    },
-    {
-      "globalCode": "ADV_RECOVERY",
-      "LastModifiedDate": "11/09/2024"
-    },
-    {
-      "globalCode": "ADJUSTMENT",
-      "LastModifiedDate": "06/23/2022"
-    },
-    {
-      "globalCode": "ARREAR",
-      "LastModifiedDate": "05/01/2020"
-    }
-  ],
-  "MISC_PAYROLL": [
-    {
-      "globalCode": "REG",
-      "LastModifiedDate": "04/13/2022"
-    },
-    {
-      "globalCode": "LEAVE",
-      "LastModifiedDate": "09/20/2024"
-    }
-  ],
-  "COMMISSION_PAY": [
-    {
-      "globalCode": "OT",
-      "LastModifiedDate": "12/12/2022"
-    },
-    {
-      "globalCode": "SHIFT_PREMIUM",
-      "LastModifiedDate": "05/04/2021"
-    },
-    {
-      "globalCode": "ESIC",
-      "LastModifiedDate": "07/18/2024"
-    },
-    {
-      "globalCode": "LOAN",
-      "LastModifiedDate": "11/20/2023"
-    },
-    {
-      "globalCode": "COMMISSION",
-      "LastModifiedDate": "03/04/2023"
-    },
-    {
-      "globalCode": "LOAN",
-      "LastModifiedDate": "07/21/2021"
-    }
-  ]
+  "Earnings": {
+    "BASIC_SALARY": [
+      {
+        "globalCode": "BONUS",
+        "LastModifiedDate": "10/23/2021"
+      },
+      {
+        "globalCode": "EMPLOYEE_PF",
+        "LastModifiedDate": "04/21/2023"
+      },
+      {
+        "globalCode": "LEAVE_ENCASH",
+        "LastModifiedDate": "08/12/2023"
+      },
+      {
+        "globalCode": "TRANSPORT",
+        "LastModifiedDate": "01/04/2024"
+      },
+      {
+        "globalCode": "MEDICAL",
+        "LastModifiedDate": "04/18/2023"
+      },
+      {
+        "globalCode": "ATTENDANCE_INCENTIVE",
+        "LastModifiedDate": "04/05/2024"
+      },
+      {
+        "globalCode": "SHIFT_PREMIUM",
+        "LastModifiedDate": "06/08/2020"
+      }
+    ],
+    "OVERTIME_PAY": [
+      {
+        "globalCode": "BASIC",
+        "LastModifiedDate": "05/17/2022"
+      },
+      {
+        "globalCode": "PERFORMANCE_BONUS",
+        "LastModifiedDate": "01/16/2023"
+      },
+      {
+        "globalCode": "PTAX",
+        "LastModifiedDate": "07/10/2021"
+      },
+      {
+        "globalCode": "SUPPLEMENTAL_PAY",
+        "LastModifiedDate": "10/28/2022"
+      }
+    ],
+    "HOUSE_ALLOWANCE": [
+      {
+        "globalCode": "BASE",
+        "LastModifiedDate": "08/14/2022"
+      },
+      {
+        "globalCode": "HOUSE_RENT_ALLOWANCE",
+        "LastModifiedDate": "07/14/2023"
+      },
+      {
+        "globalCode": "INSURANCE",
+        "LastModifiedDate": "05/28/2024"
+      },
+      {
+        "globalCode": "COMMISSION",
+        "LastModifiedDate": "08/08/2020"
+      }
+    ],
+    "DEARNESS_ALLOWANCE": [
+      {
+        "globalCode": "TRAVEL_ALLOWANCE",
+        "LastModifiedDate": "04/10/2024"
+      },
+      {
+        "globalCode": "TRAVEL_ALLOWANCE",
+        "LastModifiedDate": "10/08/2020"
+      },
+      {
+        "globalCode": "TRAVEL_ALLOWANCE",
+        "LastModifiedDate": "02/25/2020"
+      }
+    ],
+    "SHIFT_ALLOWANCE": [
+      {
+        "globalCode": "EMPLOYER_PF",
+        "LastModifiedDate": "01/01/2022"
+      },
+      {
+        "globalCode": "LEAVE",
+        "LastModifiedDate": "06/04/2023"
+      },
+      {
+        "globalCode": "SPECIAL_PAY",
+        "LastModifiedDate": "05/22/2024"
+      },
+      {
+        "globalCode": "INS_PREMIUM",
+        "LastModifiedDate": "07/25/2020"
+      },
+      {
+        "globalCode": "INS_PREMIUM",
+        "LastModifiedDate": "11/06/2023"
+      },
+      {
+        "globalCode": "LEAVE",
+        "LastModifiedDate": "06/17/2020"
+      },
+      {
+        "globalCode": "ESIC",
+        "LastModifiedDate": "04/21/2021"
+      }
+    ],
+    "BONUS_PAYMENT": [
+      {
+        "globalCode": "RETRO",
+        "LastModifiedDate": "09/25/2021"
+      },
+      {
+        "globalCode": "MED_ALLOW",
+        "LastModifiedDate": "10/16/2020"
+      },
+      {
+        "globalCode": "NIGHT_SHIFT",
+        "LastModifiedDate": "10/01/2022"
+      }
+    ],
+    "LEAVE_ENCASHMENT": [
+      {
+        "globalCode": "VACATION_PAY",
+        "LastModifiedDate": "12/08/2021"
+      },
+      {
+        "globalCode": "VACATION_PAY",
+        "LastModifiedDate": "01/27/2024"
+      },
+      {
+        "globalCode": "SHIFT_PREMIUM",
+        "LastModifiedDate": "07/13/2024"
+      },
+      {
+        "globalCode": "OT",
+        "LastModifiedDate": "03/20/2020"
+      }
+    ],
+    "ARREAR_PAYMENT": [
+      {
+        "globalCode": "REGULAR_HOURS",
+        "LastModifiedDate": "06/28/2024"
+      }
+    ],
+    "RETRO_PAYMENT": [
+      {
+        "globalCode": "OVERTIME",
+        "LastModifiedDate": "10/08/2022"
+      },
+      {
+        "globalCode": "OVERTIME",
+        "LastModifiedDate": "04/16/2021"
+      },
+      {
+        "globalCode": "OVERTIME",
+        "LastModifiedDate": "08/26/2024"
+      }
+    ],
+    "SPECIAL_ALLOWANCE": [
+      {
+        "globalCode": "BASIC_REGULAR",
+        "LastModifiedDate": "05/08/2022"
+      },
+      {
+        "globalCode": "DA",
+        "LastModifiedDate": "08/16/2021"
+      },
+      {
+        "globalCode": "PROF_TAX",
+        "LastModifiedDate": "12/03/2020"
+      },
+      {
+        "globalCode": "SPECIAL_ALLOW",
+        "LastModifiedDate": "11/07/2021"
+      },
+      {
+        "globalCode": "EMPLOYER_PF",
+        "LastModifiedDate": "09/04/2021"
+      }
+    ],
+    "TRANSPORT_ALLOWANCE": [
+      {
+        "globalCode": "DEARNESS",
+        "LastModifiedDate": "09/20/2022"
+      },
+      {
+        "globalCode": "ESI",
+        "LastModifiedDate": "05/15/2022"
+      },
+      {
+        "globalCode": "ARREAR",
+        "LastModifiedDate": "08/22/2022"
+      },
+      {
+        "globalCode": "ADJUSTMENT",
+        "LastModifiedDate": "02/06/2023"
+      }
+    ],
+    "MEDICAL_ALLOWANCE": [
+      {
+        "globalCode": "HRA",
+        "LastModifiedDate": "08/09/2024"
+      },
+      {
+        "globalCode": "MEDICAL",
+        "LastModifiedDate": "08/26/2023"
+      },
+      {
+        "globalCode": "MEDICAL",
+        "LastModifiedDate": "11/06/2021"
+      }
+    ],
+    "MISC_PAYROLL": [
+      {
+        "globalCode": "REG",
+        "LastModifiedDate": "04/13/2022"
+      },
+      {
+        "globalCode": "LEAVE",
+        "LastModifiedDate": "09/20/2024"
+      }
+    ],
+    "COMMISSION_PAY": [
+      {
+        "globalCode": "OT",
+        "LastModifiedDate": "12/12/2022"
+      },
+      {
+        "globalCode": "SHIFT_PREMIUM",
+        "LastModifiedDate": "05/04/2021"
+      },
+      {
+        "globalCode": "ESIC",
+        "LastModifiedDate": "07/18/2024"
+      },
+      {
+        "globalCode": "LOAN",
+        "LastModifiedDate": "11/20/2023"
+      },
+      {
+        "globalCode": "COMMISSION",
+        "LastModifiedDate": "03/04/2023"
+      },
+      {
+        "globalCode": "LOAN",
+        "LastModifiedDate": "07/21/2021"
+      }
+    ]
+  },
+  "Deductions": {
+    "PF_DEDUCTION": [
+      {
+        "globalCode": "ADVANCE",
+        "LastModifiedDate": "03/14/2021"
+      },
+      {
+        "globalCode": "OTHER_EARNINGS",
+        "LastModifiedDate": "09/02/2022"
+      },
+      {
+        "globalCode": "ADVANCE",
+        "LastModifiedDate": "09/13/2024"
+      }
+    ],
+    "ESI_DEDUCTION": [
+      {
+        "globalCode": "VACATION_PAY",
+        "LastModifiedDate": "05/19/2024"
+      }
+    ],
+    "LOAN_RECOVERY": [
+      {
+        "globalCode": "MEAL_ALLOWANCE",
+        "LastModifiedDate": "01/06/2021"
+      },
+      {
+        "globalCode": "MEAL_ALLOWANCE",
+        "LastModifiedDate": "09/12/2021"
+      }
+    ],
+    "INSURANCE_DEDUCTION": [
+      {
+        "globalCode": "STAT_BONUS",
+        "LastModifiedDate": "03/04/2020"
+      },
+      {
+        "globalCode": "MISC",
+        "LastModifiedDate": "11/06/2020"
+      },
+      {
+        "globalCode": "STAT_DEDUCTION",
+        "LastModifiedDate": "10/22/2020"
+      },
+      {
+        "globalCode": "STAT_BONUS",
+        "LastModifiedDate": "10/09/2022"
+      }
+    ],
+    "ADVANCE_RECOVERY": [
+      {
+        "globalCode": "SHIFT",
+        "LastModifiedDate": "06/19/2022"
+      },
+      {
+        "globalCode": "PF",
+        "LastModifiedDate": "11/17/2022"
+      },
+      {
+        "globalCode": "LOAN_DEDUCTION",
+        "LastModifiedDate": "04/10/2023"
+      },
+      {
+        "globalCode": "ADV_RECOVERY",
+        "LastModifiedDate": "10/01/2024"
+      },
+      {
+        "globalCode": "INCENTIVE",
+        "LastModifiedDate": "03/03/2021"
+      },
+      {
+        "globalCode": "ADV_RECOVERY",
+        "LastModifiedDate": "06/07/2022"
+      },
+      {
+        "globalCode": "ADV_RECOVERY",
+        "LastModifiedDate": "11/09/2024"
+      },
+      {
+        "globalCode": "ADJUSTMENT",
+        "LastModifiedDate": "06/23/2022"
+      },
+      {
+        "globalCode": "ARREAR",
+        "LastModifiedDate": "05/01/2020"
+      }
+    ]
+  },
+  "Taxes": {
+    "PROFESSIONAL_TAX": [
+      {
+        "globalCode": "DEARNESS",
+        "LastModifiedDate": "10/16/2024"
+      },
+      {
+        "globalCode": "DEARNESS",
+        "LastModifiedDate": "12/06/2022"
+      }
+    ]
+  }
 }

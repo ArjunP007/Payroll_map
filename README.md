@@ -2,7 +2,7 @@
 
 Enterprise-style batch payroll code-mapping backend.
 
-The service loads historical nested JSON mappings, normalizes them, builds in-memory indexes, applies a selected precedence rule, and returns only final `priorCode -> globalCode` mappings.
+The service loads category-scoped historical JSON mappings, normalizes them, builds in-memory indexes per payroll namespace, applies a selected precedence rule, and returns final `priorCode -> globalCode` mappings grouped by Earnings, Deductions, and Taxes.
 
 ## Project Structure
 
@@ -17,7 +17,7 @@ paycor_mapping/
     loader.py           JSON loading, validation, normalization
     index_builder.py    Fast lookup/index construction
     mapper.py           Precedence and deterministic tie-break logic
-    gpt_client.py       Optional bounded GPT adjudication layer
+    gpt_client.py       Optional bounded GPT missing-prior fallback layer
     prompt_builder.py   Constrained GPT prompt construction
     validator.py        Dataset and output validation guards
     azure_storage.py    Azure Key Vault and Blob Storage helpers
@@ -29,6 +29,7 @@ paycor_mapping/
   tests/
     test_loader.py
     test_mapper.py
+    test_gpt_prompt.py
     test_api.py
 
   deployment/
@@ -46,6 +47,43 @@ python -m pip install -r requirements.txt
 python -m uvicorn app.main:app --host 127.0.0.1 --port 8000
 ```
 
+## Dataset Shape
+
+The canonical dataset contract is category-scoped:
+
+```json
+{
+  "Earnings": {
+    "BASIC_SALARY": [
+      {
+        "globalCode": "BASIC",
+        "LastModifiedDate": "05/20/2025",
+        "payType": "salary",
+        "country": "US"
+      }
+    ]
+  },
+  "Deductions": {
+    "HEALTH_INSURANCE": [
+      {
+        "globalCode": "INS",
+        "LastModifiedDate": "05/18/2025"
+      }
+    ]
+  },
+  "Taxes": {
+    "INCOME_TAX": [
+      {
+        "globalCode": "TAX",
+        "LastModifiedDate": "05/17/2025"
+      }
+    ]
+  }
+}
+```
+
+Deterministic mapping uses only `priorCode`, `globalCode`, and `LastModifiedDate`. Extra row fields are preserved as metadata for GPT fallback only.
+
 ## Main Endpoint
 
 ```http
@@ -55,13 +93,21 @@ Content-Type: application/json
 {"mode": "MAX_OCCURRENCE"}
 ```
 
-Response is a strict JSON array only:
+Response is strict EDT-grouped JSON:
 
 ```json
-[
-  {"priorCode": "BASIC_SALARY", "globalCode": "BASIC"},
-  {"priorCode": "OVERTIME_PAY", "globalCode": "OT"}
-]
+{
+  "Earnings": [
+    {"priorCode": "BASIC_SALARY", "globalCode": "BASIC"},
+    {"priorCode": "OVERTIME_PAY", "globalCode": "OT"}
+  ],
+  "Deductions": [
+    {"priorCode": "HEALTH_INSURANCE", "globalCode": "INS"}
+  ],
+  "Taxes": [
+    {"priorCode": "INCOME_TAX", "globalCode": "TAX"}
+  ]
+}
 ```
 
 Supported modes:
@@ -74,29 +120,36 @@ Precedence modes are resolved through `MODE_RESOLVERS` in `app/mapper.py`.
 Adding a deterministic mode means adding a resolver and registering it with
 `register_mode_resolver`.
 
-## Missing Prior-Code Fallback
+## Single And Batch Lookup
 
-Known prior codes always use the deterministic precedence engine. GPT is used
-only when a single prior-code lookup is missing from the historical dataset.
-The fallback sends only the missing prior code and the sorted global-code
-catalog from the dataset, never the full historical JSON.
+Known prior codes always use the deterministic precedence engine within each category namespace.
 
 ```http
 GET /api/v1/map/REMOTE_HOME_STIPEND?mode=MAX_OCCURRENCE
 ```
 
-Response shape remains the same mapping object:
+Selected prior codes can be resolved in one request:
 
-```json
-{"priorCode": "REMOTE_HOME_STIPEND", "globalCode": "REMOTE_ALLOWANCE"}
+```http
+POST /api/v1/map/batch
+Content-Type: application/json
+
+{"mode": "MAX_OCCURRENCE", "priorCodes": ["ADVANCE_RECOVERY", "REMOTE_HOME_STIPEND"]}
 ```
 
-If GPT is unavailable or returns a code outside the allowed catalog, the service
-returns:
+GPT is used only when a requested prior code is missing from all historical category buckets. The fallback receives the missing prior code list, category-wise global-code catalogs, and metadata-rich candidate evidence when available. GPT output is validated and must use the same EDT shape:
 
 ```json
-{"priorCode": "REMOTE_HOME_STIPEND", "globalCode": "NO_MATCH"}
+{
+  "Earnings": [
+    {"priorCode": "REMOTE_HOME_STIPEND", "globalCode": "REMOTE_ALLOWANCE"}
+  ],
+  "Deductions": [],
+  "Taxes": []
+}
 ```
+
+If GPT is unavailable, uncertain, or returns a code outside the category catalog, the service returns `NO_MATCH`.
 
 ## Configuration
 
@@ -110,7 +163,6 @@ Common variables:
 - `AZURE_STORAGE_CONNECTION_STRING`
 - `AZURE_STORAGE_CONTAINER_NAME`
 - `AZURE_STORAGE_BLOB_NAME`
-- `GPT_ADJUDICATION_ENABLED`
 - `GPT_MISSING_PRIOR_FALLBACK_ENABLED`
 - `OPENAI_API_KEY`
 - `AZURE_OPENAI_ENDPOINT`

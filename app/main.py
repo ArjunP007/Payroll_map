@@ -21,10 +21,11 @@ from app.exceptions import (
 )
 from app.logging_utils import log_extra
 from app.schemas import (
+    BatchMappingRequest,
+    CategoryMappingResponse,
     ErrorResponse,
     HealthResponse,
     MappingRequest,
-    MappingResult,
     PriorCodesResponse,
     ReloadRequest,
     ReloadResponse,
@@ -220,11 +221,11 @@ async def health() -> HealthResponse:
 
 @app.post(
     "/api/v1/map",
-    response_model=list[MappingResult],
+    response_model=CategoryMappingResponse,
     summary="Resolve all prior codes for the selected precedence mode",
     tags=["Mapping"],
 )
-async def batch_map(request: MappingRequest) -> list[MappingResult]:
+async def batch_map(request: MappingRequest) -> CategoryMappingResponse:
     logger.info(
         "Batch mapping request: mode=%s",
         request.mode.value,
@@ -233,16 +234,36 @@ async def batch_map(request: MappingRequest) -> list[MappingResult]:
     return engine.map_all(request.mode)
 
 
+@app.post(
+    "/api/v1/map/batch",
+    response_model=CategoryMappingResponse,
+    summary="Resolve selected prior codes, including batch GPT fallback for missing history",
+    tags=["Mapping"],
+)
+async def batch_lookup(request: BatchMappingRequest) -> CategoryMappingResponse:
+    logger.info(
+        "Batch lookup request: mode=%s priorCodes=%d",
+        request.mode.value,
+        len(request.priorCodes),
+        extra=log_extra(
+            "batch_lookup_request",
+            mode=request.mode.value,
+            prior_code_count=len(request.priorCodes),
+        ),
+    )
+    return engine.map_batch(prior_codes=request.priorCodes, mode=request.mode)
+
+
 @app.get(
     "/api/v1/map/{prior_code}",
-    response_model=MappingResult,
+    response_model=CategoryMappingResponse,
     summary="Resolve one prior code, with GPT fallback for missing history",
     tags=["Mapping"],
 )
 async def map_single_prior_code(
     prior_code: str,
     mode: PrecedenceMode = settings.default_mode,
-) -> MappingResult:
+) -> CategoryMappingResponse:
     logger.info(
         "Single mapping request: priorCode=%s mode=%s",
         prior_code,
@@ -285,10 +306,12 @@ async def reload_dataset(request: ReloadRequest | None = None) -> ReloadResponse
     tags=["Operations"],
 )
 async def list_prior_codes() -> PriorCodesResponse:
-    prior_codes = list(engine.prior_codes())
+    prior_codes = engine.prior_codes_by_category()
     return PriorCodesResponse(
-        totalPriorCodes=len(prior_codes),
-        priorCodes=prior_codes,
+        totalPriorCodes=sum(len(items) for items in prior_codes.values()),
+        Earnings=prior_codes["Earnings"],
+        Deductions=prior_codes["Deductions"],
+        Taxes=prior_codes["Taxes"],
     )
 
 

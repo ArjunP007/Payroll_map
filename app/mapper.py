@@ -1,4 +1,4 @@
-"""Deterministic payroll mapping adjudication engine."""
+"""Deterministic category-scoped payroll mapping adjudication engine."""
 
 from __future__ import annotations
 
@@ -8,56 +8,56 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Protocol, TypeAlias
 
-from app.config import PrecedenceMode, TieBreakStrategy, settings
+from app.config import PAYROLL_CATEGORIES, PayrollCategory, PrecedenceMode, TieBreakStrategy, settings
 from app.exceptions import (
     GPTAdjudicationError,
     MappingError,
     UnsupportedPrecedenceModeError,
 )
-from app.index_builder import MappingIndex
+from app.index_builder import CategoryMappingIndex, MappingIndex
 from app.logging_utils import log_extra
 from app.prompt_builder import NO_MATCH_GLOBAL_CODE
-from app.schemas import MappingDecisionDetail, MappingResult
+from app.schemas import CategoryMappingResponse, MappingDecisionDetail, MappingResult
 
 logger = logging.getLogger(__name__)
 
 MetricValue: TypeAlias = int | datetime
 MetricValues: TypeAlias = Mapping[str, MetricValue]
 RankingRule: TypeAlias = tuple[str, MetricValues]
+CategoryResultMap: TypeAlias = dict[PayrollCategory, list[MappingResult]]
 
 
 class GPTAdjudicator(Protocol):
-    """Minimal interface required from optional GPT adjudication providers."""
-
-    def adjudicate(
-        self,
-        *,
-        prior_code: str,
-        candidates: list[str],
-        mode: PrecedenceMode,
-        occurrence_counts: dict[str, int],
-        latest_dates: dict[str, str],
-    ) -> tuple[str, str]:
-        """Return the selected winner and raw provider response."""
+    """Minimal interface required from optional GPT fallback providers."""
 
     def recommend_global_code(
         self,
         *,
         prior_code: str,
-        candidate_codes: Sequence[str],
-    ) -> str:
-        """Recommend one global code for a prior code missing from history."""
+        catalogs: Mapping[PayrollCategory, Sequence[str]],
+        catalog_evidence: Mapping[PayrollCategory, Sequence[Mapping[str, object]]],
+    ) -> CategoryMappingResponse:
+        """Recommend category-scoped global-code mappings for one missing prior code."""
+
+    def recommend_global_codes(
+        self,
+        *,
+        prior_codes: Sequence[str],
+        catalogs: Mapping[PayrollCategory, Sequence[str]],
+        catalog_evidence: Mapping[PayrollCategory, Sequence[Mapping[str, object]]],
+    ) -> CategoryMappingResponse:
+        """Recommend category-scoped global-code mappings for missing prior codes."""
 
 
 @dataclass(frozen=True)
 class MappingResolution:
-    """Internal deterministic decision before optional GPT adjudication."""
+    """Internal deterministic decision before public response shaping."""
 
     winner: str
     detail: MappingDecisionDetail
 
 
-ModeResolver: TypeAlias = Callable[[MappingIndex, str], MappingResolution]
+ModeResolver: TypeAlias = Callable[[CategoryMappingIndex, str], MappingResolution]
 ResolverRegistrar: TypeAlias = Callable[[ModeResolver], ModeResolver]
 
 MODE_RESOLVERS: dict[PrecedenceMode, ModeResolver] = {}
@@ -87,31 +87,38 @@ def map_all(
     index: MappingIndex,
     mode: PrecedenceMode | str,
     gpt_client: GPTAdjudicator | None = None,
-) -> list[MappingResult]:
-    """Resolve every prior code in source order."""
+) -> CategoryMappingResponse:
+    """Resolve every historical prior code within each category namespace."""
 
+    del gpt_client
     resolved_mode = _coerce_mode(mode)
     logger.info(
-        "Batch mapping started: mode=%s priorCodes=%d",
+        "Category-scoped batch mapping started: mode=%s priorCodes=%d",
         resolved_mode.value,
-        len(index.prior_codes),
+        index.total_prior_codes,
         extra=log_extra(
             "mapping_started",
             mode=resolved_mode.value,
-            prior_code_count=len(index.prior_codes),
+            prior_code_count=index.total_prior_codes,
         ),
     )
-    results = [
-        _resolve(index=index, prior_code=prior_code, mode=resolved_mode, gpt_client=gpt_client)
-        for prior_code in index.prior_codes
-    ]
+
+    results = _empty_result_map()
+    for category in PAYROLL_CATEGORIES:
+        category_index = index.category_indexes[category]
+        results[category] = [
+            _resolve(index=category_index, prior_code=prior_code, mode=resolved_mode)
+            for prior_code in category_index.prior_codes
+        ]
+
+    total_mapped = sum(len(items) for items in results.values())
     logger.info(
-        "Batch mapping complete: mode=%s mapped=%d",
+        "Category-scoped batch mapping complete: mode=%s mapped=%d",
         resolved_mode.value,
-        len(results),
-        extra=log_extra("mapping_completed", mode=resolved_mode.value, mapped_count=len(results)),
+        total_mapped,
+        extra=log_extra("mapping_completed", mode=resolved_mode.value, mapped_count=total_mapped),
     )
-    return results
+    return CategoryMappingResponse.from_category_map(results)
 
 
 def map_one(
@@ -119,70 +126,98 @@ def map_one(
     prior_code: str,
     mode: PrecedenceMode | str,
     gpt_client: GPTAdjudicator | None = None,
-) -> MappingResult:
-    """Resolve one prior code, primarily for tests and admin diagnostics."""
+) -> CategoryMappingResponse:
+    """Resolve one prior code across category namespaces."""
 
-    normalized_prior_code = prior_code.strip().upper()
+    normalized_prior_code = _normalize_prior_code(prior_code)
     resolved_mode = _coerce_mode(mode)
-    if normalized_prior_code not in index.all_rows:
+    matching_categories = index.categories_for_prior_code(normalized_prior_code)
+    if not matching_categories:
         return _resolve_missing_prior_with_gpt(
             prior_code=normalized_prior_code,
             index=index,
             gpt_client=gpt_client,
         )
-    return _resolve(
-        index=index,
-        prior_code=normalized_prior_code,
-        mode=resolved_mode,
-        gpt_client=gpt_client,
-    )
+
+    results = _empty_result_map()
+    for category in matching_categories:
+        results[category].append(
+            _resolve(
+                index=index.category_indexes[category],
+                prior_code=normalized_prior_code,
+                mode=resolved_mode,
+            )
+        )
+    return CategoryMappingResponse.from_category_map(results)
+
+
+def map_batch(
+    index: MappingIndex,
+    prior_codes: Sequence[str],
+    mode: PrecedenceMode | str,
+    gpt_client: GPTAdjudicator | None = None,
+) -> CategoryMappingResponse:
+    """Resolve known prior codes deterministically and missing ones through GPT fallback."""
+
+    normalized_prior_codes = [_normalize_prior_code(prior_code) for prior_code in prior_codes]
+    resolved_mode = _coerce_mode(mode)
+    results = _empty_result_map()
+    missing_prior_codes: list[str] = []
+
+    for prior_code in normalized_prior_codes:
+        matching_categories = index.categories_for_prior_code(prior_code)
+        if not matching_categories:
+            missing_prior_codes.append(prior_code)
+            continue
+
+        for category in matching_categories:
+            results[category].append(
+                _resolve(
+                    index=index.category_indexes[category],
+                    prior_code=prior_code,
+                    mode=resolved_mode,
+                )
+            )
+
+    if missing_prior_codes:
+        fallback = _resolve_missing_priors_with_gpt(
+            prior_codes=missing_prior_codes,
+            index=index,
+            gpt_client=gpt_client,
+        )
+        _merge_response(results, fallback)
+
+    return CategoryMappingResponse.from_category_map(results)
 
 
 def _resolve(
     *,
-    index: MappingIndex,
+    index: CategoryMappingIndex,
     prior_code: str,
     mode: PrecedenceMode,
-    gpt_client: GPTAdjudicator | None,
 ) -> MappingResult:
     resolver = _resolver_for_mode(mode)
     resolution = resolver(index, prior_code)
-    winner = resolution.winner
     detail = resolution.detail
 
     if detail.tieBreakApplied:
         logger.info(
-            "Tie-break triggered: priorCode=%s mode=%s strategy=%s",
+            "Tie-break triggered: category=%s priorCode=%s mode=%s strategy=%s",
+            detail.category.value,
             detail.priorCode,
             detail.mode.value,
             detail.tieBreakStrategy,
             extra=log_extra(
                 "tie_break_triggered",
+                category=detail.category.value,
                 prior_code=detail.priorCode,
                 mode=detail.mode.value,
                 strategy=detail.tieBreakStrategy,
             ),
         )
 
-    if detail.tieBreakApplied and settings.gpt_adjudication_enabled and gpt_client is not None:
-        logger.info(
-            "GPT adjudication triggered: priorCode=%s mode=%s",
-            detail.priorCode,
-            detail.mode.value,
-            extra=log_extra(
-                "gpt_adjudication_triggered",
-                prior_code=detail.priorCode,
-                mode=detail.mode.value,
-            ),
-        )
-        winner, detail = _try_gpt_adjudication(
-            gpt_client=gpt_client,
-            detail=detail,
-            deterministic_winner=winner,
-        )
-
     _log_decision(detail)
-    return MappingResult(priorCode=prior_code, globalCode=winner)
+    return MappingResult(priorCode=prior_code, globalCode=resolution.winner)
 
 
 def _resolve_missing_prior_with_gpt(
@@ -190,102 +225,83 @@ def _resolve_missing_prior_with_gpt(
     prior_code: str,
     index: MappingIndex,
     gpt_client: GPTAdjudicator | None,
-) -> MappingResult:
-    """Resolve a missing prior code using GPT against the global-code catalog only."""
+) -> CategoryMappingResponse:
+    """Resolve one missing prior code using category-wise GPT fallback."""
 
-    candidate_codes = sorted(index.all_global_codes)
-    if not candidate_codes:
+    return _resolve_missing_priors_with_gpt(
+        prior_codes=[prior_code],
+        index=index,
+        gpt_client=gpt_client,
+    )
+
+
+def _resolve_missing_priors_with_gpt(
+    *,
+    prior_codes: Sequence[str],
+    index: MappingIndex,
+    gpt_client: GPTAdjudicator | None,
+) -> CategoryMappingResponse:
+    """Resolve missing prior codes using GPT against category-specific catalogs only."""
+
+    catalogs = index.all_global_codes_by_category()
+    total_candidates = sum(len(codes) for codes in catalogs.values())
+    if total_candidates == 0:
         logger.warning(
-            "Missing prior-code fallback has no global-code candidates: priorCode=%s",
-            prior_code,
-            extra=log_extra("missing_prior_no_candidates", prior_code=prior_code),
+            "Missing prior-code fallback has no global-code candidates",
+            extra=log_extra("missing_prior_no_candidates", prior_code_count=len(prior_codes)),
         )
-        return MappingResult(priorCode=prior_code, globalCode=NO_MATCH_GLOBAL_CODE)
+        return _no_match_response(prior_codes)
 
     logger.info(
-        "Missing historical prior-code match; GPT fallback eligible: priorCode=%s candidates=%d",
-        prior_code,
-        len(candidate_codes),
+        "Missing prior-code GPT fallback eligible: priorCodes=%d candidates=%d",
+        len(prior_codes),
+        total_candidates,
         extra=log_extra(
             "missing_prior_gpt_fallback_eligible",
-            prior_code=prior_code,
-            candidate_count=len(candidate_codes),
+            prior_code_count=len(prior_codes),
+            candidate_count=total_candidates,
         ),
     )
 
     if gpt_client is None:
         logger.warning(
-            "Missing prior-code GPT fallback unavailable; returning NO_MATCH: priorCode=%s",
-            prior_code,
-            extra=log_extra("missing_prior_gpt_unavailable", prior_code=prior_code),
+            "Missing prior-code GPT fallback unavailable; returning NO_MATCH",
+            extra=log_extra("missing_prior_gpt_unavailable", prior_code_count=len(prior_codes)),
         )
-        return MappingResult(priorCode=prior_code, globalCode=NO_MATCH_GLOBAL_CODE)
+        return _no_match_response(prior_codes)
 
     try:
-        recommendation = gpt_client.recommend_global_code(
-            prior_code=prior_code,
-            candidate_codes=candidate_codes,
+        if len(prior_codes) == 1:
+            return gpt_client.recommend_global_code(
+                prior_code=prior_codes[0],
+                catalogs=catalogs,
+                catalog_evidence=index.catalog_evidence_by_category(),
+            )
+        return gpt_client.recommend_global_codes(
+            prior_codes=prior_codes,
+            catalogs=catalogs,
+            catalog_evidence=index.catalog_evidence_by_category(),
         )
     except GPTAdjudicationError as exc:
         logger.warning(
-            "Missing prior-code GPT fallback failed for priorCode=%s: %s",
-            prior_code,
+            "Missing prior-code GPT fallback failed: %s",
             exc,
-            extra=log_extra("missing_prior_gpt_failed", prior_code=prior_code),
+            extra=log_extra("missing_prior_gpt_failed", prior_code_count=len(prior_codes)),
         )
-        return MappingResult(priorCode=prior_code, globalCode=NO_MATCH_GLOBAL_CODE)
+        return _no_match_response(prior_codes)
     except Exception:
         logger.exception(
-            "Unexpected missing prior-code GPT fallback failure for priorCode=%s",
-            prior_code,
-            extra=log_extra("missing_prior_gpt_unexpected_failure", prior_code=prior_code),
-        )
-        return MappingResult(priorCode=prior_code, globalCode=NO_MATCH_GLOBAL_CODE)
-
-    global_code = _validate_gpt_global_code_recommendation(
-        recommendation=recommendation,
-        candidate_codes=candidate_codes,
-        prior_code=prior_code,
-    )
-    return MappingResult(priorCode=prior_code, globalCode=global_code)
-
-
-def _validate_gpt_global_code_recommendation(
-    *,
-    recommendation: str,
-    candidate_codes: Sequence[str],
-    prior_code: str,
-) -> str:
-    normalized = recommendation.strip().upper()
-    allowed = set(candidate_codes)
-    if normalized in allowed:
-        logger.info(
-            "Missing prior-code GPT fallback selected globalCode=%s for priorCode=%s",
-            normalized,
-            prior_code,
+            "Unexpected missing prior-code GPT fallback failure",
             extra=log_extra(
-                "missing_prior_gpt_selected",
-                prior_code=prior_code,
-                global_code=normalized,
+                "missing_prior_gpt_unexpected_failure",
+                prior_code_count=len(prior_codes),
             ),
         )
-        return normalized
-
-    logger.warning(
-        "Missing prior-code GPT fallback returned invalid recommendation=%s for priorCode=%s",
-        normalized,
-        prior_code,
-        extra=log_extra(
-            "missing_prior_gpt_invalid_recommendation",
-            prior_code=prior_code,
-            recommendation=normalized,
-        ),
-    )
-    return NO_MATCH_GLOBAL_CODE
+        return _no_match_response(prior_codes)
 
 
 @register_mode_resolver(PrecedenceMode.ONE_TO_ONE)
-def _resolve_one_to_one(index: MappingIndex, prior_code: str) -> MappingResolution:
+def _resolve_one_to_one(index: CategoryMappingIndex, prior_code: str) -> MappingResolution:
     unique_codes = sorted(index.unique_codes[prior_code])
 
     if len(unique_codes) == 1:
@@ -323,7 +339,7 @@ def _resolve_one_to_one(index: MappingIndex, prior_code: str) -> MappingResoluti
 
 
 @register_mode_resolver(PrecedenceMode.MAX_OCCURRENCE)
-def _resolve_max_occurrence(index: MappingIndex, prior_code: str) -> MappingResolution:
+def _resolve_max_occurrence(index: CategoryMappingIndex, prior_code: str) -> MappingResolution:
     winner, tied_candidates, tie_break_applied, tie_strategy = _rank_candidates(
         index=index,
         prior_code=prior_code,
@@ -350,7 +366,7 @@ def _resolve_max_occurrence(index: MappingIndex, prior_code: str) -> MappingReso
 
 
 @register_mode_resolver(PrecedenceMode.LAST_MODIFIED_DATE)
-def _resolve_last_modified_date(index: MappingIndex, prior_code: str) -> MappingResolution:
+def _resolve_last_modified_date(index: CategoryMappingIndex, prior_code: str) -> MappingResolution:
     winner, tied_candidates, tie_break_applied, tie_strategy = _rank_candidates(
         index=index,
         prior_code=prior_code,
@@ -378,7 +394,7 @@ def _resolve_last_modified_date(index: MappingIndex, prior_code: str) -> Mapping
 
 def _rank_candidates(
     *,
-    index: MappingIndex,
+    index: CategoryMappingIndex,
     prior_code: str,
     candidates: Sequence[str],
     ranking: Sequence[RankingRule],
@@ -399,7 +415,7 @@ def _rank_candidates(
     return winner, sorted(remaining), True, _tie_break_strategy().value
 
 
-def _break_tie(index: MappingIndex, prior_code: str, candidates: Sequence[str]) -> str:
+def _break_tie(index: CategoryMappingIndex, prior_code: str, candidates: Sequence[str]) -> str:
     strategy = _tie_break_strategy()
     if strategy == TieBreakStrategy.LEXICOGRAPHIC:
         return sorted(candidates)[0]
@@ -408,17 +424,17 @@ def _break_tie(index: MappingIndex, prior_code: str, candidates: Sequence[str]) 
     return sorted(candidates, key=lambda code: (first_seen.get(code, 10**9), code))[0]
 
 
-def _count_metric(index: MappingIndex, prior_code: str) -> Mapping[str, int]:
+def _count_metric(index: CategoryMappingIndex, prior_code: str) -> Mapping[str, int]:
     return index.occurrence_counts[prior_code]
 
 
-def _date_metric(index: MappingIndex, prior_code: str) -> Mapping[str, datetime]:
+def _date_metric(index: CategoryMappingIndex, prior_code: str) -> Mapping[str, datetime]:
     return index.latest_dates[prior_code]
 
 
 def _detail(
     *,
-    index: MappingIndex,
+    index: CategoryMappingIndex,
     prior_code: str,
     mode: PrecedenceMode,
     winner: str,
@@ -433,6 +449,7 @@ def _detail(
         for code, date in index.latest_dates[prior_code].items()
     }
     return MappingDecisionDetail(
+        category=index.category,
         priorCode=prior_code,
         winningCode=winner,
         mode=mode,
@@ -446,62 +463,6 @@ def _detail(
         tieBreakApplied=tie_break_applied,
         tieBreakStrategy=tie_strategy,
     )
-
-
-def _try_gpt_adjudication(
-    *,
-    gpt_client: GPTAdjudicator,
-    detail: MappingDecisionDetail,
-    deterministic_winner: str,
-) -> tuple[str, MappingDecisionDetail]:
-    try:
-        gpt_winner, raw_response = gpt_client.adjudicate(
-            prior_code=detail.priorCode,
-            candidates=detail.tiedCandidates,
-            mode=detail.mode,
-            occurrence_counts=detail.occurrenceCounts,
-            latest_dates=detail.latestDates,
-        )
-    except GPTAdjudicationError as exc:
-        logger.warning(
-            "GPT adjudication failed for priorCode=%s: %s. Using deterministic winner=%s",
-            detail.priorCode,
-            exc,
-            deterministic_winner,
-            extra=log_extra("gpt_adjudication_failed", prior_code=detail.priorCode),
-        )
-        return deterministic_winner, detail
-    except Exception:
-        logger.exception(
-            "Unexpected GPT provider failure for priorCode=%s. Using deterministic winner=%s",
-            detail.priorCode,
-            deterministic_winner,
-            extra=log_extra("gpt_adjudication_unexpected_failure", prior_code=detail.priorCode),
-        )
-        return deterministic_winner, detail
-
-    if gpt_winner not in detail.tiedCandidates:
-        logger.warning(
-            "GPT returned invalid winner=%s for priorCode=%s. Using deterministic winner=%s",
-            gpt_winner,
-            detail.priorCode,
-            deterministic_winner,
-            extra=log_extra(
-                "gpt_adjudication_invalid_winner",
-                prior_code=detail.priorCode,
-                winner=gpt_winner,
-            ),
-        )
-        return deterministic_winner, detail
-
-    updated = detail.model_copy(
-        update={
-            "winningCode": gpt_winner,
-            "gptAdjudicated": True,
-            "gptRawResponse": raw_response,
-        }
-    )
-    return gpt_winner, updated
 
 
 def _resolver_for_mode(mode: PrecedenceMode) -> ModeResolver:
@@ -540,10 +501,39 @@ def _tie_break_strategy() -> TieBreakStrategy:
         return TieBreakStrategy.FIRST_SEEN
 
 
+def _normalize_prior_code(value: str) -> str:
+    normalized = value.strip().upper()
+    if not normalized:
+        raise MappingError("priorCode cannot be empty")
+    return normalized
+
+
+def _empty_result_map() -> CategoryResultMap:
+    return {category: [] for category in PAYROLL_CATEGORIES}
+
+
+def _merge_response(target: CategoryResultMap, response: CategoryMappingResponse) -> None:
+    for category, items in response.as_category_map().items():
+        target[category].extend(items)
+
+
+def _no_match_response(prior_codes: Sequence[str]) -> CategoryMappingResponse:
+    return CategoryMappingResponse.from_category_map(
+        {
+            category: [
+                MappingResult(priorCode=prior_code, globalCode=NO_MATCH_GLOBAL_CODE)
+                for prior_code in prior_codes
+            ]
+            for category in PAYROLL_CATEGORIES
+        }
+    )
+
+
 def _log_decision(detail: MappingDecisionDetail) -> None:
     logger.debug(
-        "MAP_DECISION priorCode=%s mode=%s winner=%s candidates=%d unique=%d "
+        "MAP_DECISION category=%s priorCode=%s mode=%s winner=%s candidates=%d unique=%d "
         "primary=%s secondary=%s tie=%s gpt=%s",
+        detail.category.value,
         detail.priorCode,
         detail.mode.value,
         detail.winningCode,
@@ -555,6 +545,7 @@ def _log_decision(detail: MappingDecisionDetail) -> None:
         detail.gptAdjudicated,
         extra=log_extra(
             "mapping_decision",
+            category=detail.category.value,
             prior_code=detail.priorCode,
             mode=detail.mode.value,
             winner=detail.winningCode,

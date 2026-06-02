@@ -1,4 +1,4 @@
-"""In-memory index builder for payroll mapping records."""
+"""In-memory category-scoped indexes for payroll mapping records."""
 
 from __future__ import annotations
 
@@ -8,8 +8,9 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from datetime import datetime
 from types import MappingProxyType
-from typing import TypeVar
+from typing import Any, TypeVar
 
+from app.config import PAYROLL_CATEGORIES, PayrollCategory
 from app.exceptions import IndexBuildError
 from app.logging_utils import log_extra
 from app.schemas import NormalizedRecord
@@ -22,12 +23,14 @@ RowsByPrior = Mapping[str, tuple[NormalizedRecord, ...]]
 CodesByPrior = Mapping[str, frozenset[str]]
 IntMetricsByPrior = Mapping[str, Mapping[str, int]]
 DateMetricsByPrior = Mapping[str, Mapping[str, datetime]]
+CategoryIndexes = Mapping[PayrollCategory, "CategoryMappingIndex"]
 
 
 @dataclass(frozen=True)
-class MappingIndex:
-    """Immutable lookup bundle used by the mapping engine."""
+class CategoryMappingIndex:
+    """Immutable lookup bundle for one payroll category namespace."""
 
+    category: PayrollCategory
     all_rows: RowsByPrior
     unique_codes: CodesByPrior
     occurrence_counts: IntMetricsByPrior
@@ -60,7 +63,7 @@ class MappingIndex:
         prior_code: str,
         candidates: Sequence[str] | None = None,
     ) -> list[dict[str, str | int]]:
-        """Return bounded candidate evidence for logging or GPT adjudication."""
+        """Return bounded deterministic evidence for logging or diagnostics."""
 
         selected = list(candidates or sorted(self.unique_codes[prior_code]))
         counts = self.occurrence_counts[prior_code]
@@ -76,13 +79,110 @@ class MappingIndex:
             for code in selected
         ]
 
+    def catalog_evidence(self) -> list[dict[str, Any]]:
+        """Return metadata-rich candidate rows for GPT fallback prompts."""
+
+        evidence: list[dict[str, Any]] = []
+        for prior_code in self.prior_codes:
+            for record in self.all_rows[prior_code]:
+                item: dict[str, Any] = {
+                    "priorCode": record.priorCode,
+                    "globalCode": record.globalCode,
+                    "LastModifiedDate": record.lastModifiedDate.strftime("%Y-%m-%d"),
+                }
+                if record.metadata:
+                    item["metadata"] = dict(record.metadata)
+                evidence.append(item)
+        return evidence
+
+
+@dataclass(frozen=True)
+class MappingIndex:
+    """Immutable category-scoped lookup bundle used by the mapping engine."""
+
+    category_indexes: CategoryIndexes
+    categories: tuple[PayrollCategory, ...]
+    total_records: int
+
+    @property
+    def total_prior_codes(self) -> int:
+        return sum(len(index.prior_codes) for index in self.category_indexes.values())
+
+    def prior_codes_by_category(self) -> dict[PayrollCategory, tuple[str, ...]]:
+        return {
+            category: self.category_indexes[category].prior_codes
+            for category in self.categories
+        }
+
+    def all_global_codes_by_category(self) -> dict[PayrollCategory, tuple[str, ...]]:
+        return {
+            category: tuple(sorted(self.category_indexes[category].all_global_codes))
+            for category in self.categories
+        }
+
+    def catalog_evidence_by_category(self) -> dict[PayrollCategory, list[dict[str, Any]]]:
+        return {
+            category: self.category_indexes[category].catalog_evidence()
+            for category in self.categories
+        }
+
+    def categories_for_prior_code(self, prior_code: str) -> tuple[PayrollCategory, ...]:
+        return tuple(
+            category
+            for category in self.categories
+            if prior_code in self.category_indexes[category].all_rows
+        )
+
+    def summary(self) -> dict[str, int]:
+        return {
+            "totalCategories": len(self.categories),
+            "totalPriorCodes": self.total_prior_codes,
+            "totalRecords": self.total_records,
+        }
+
 
 def build_index(records: Sequence[NormalizedRecord]) -> MappingIndex:
-    """Build all lookup structures in one pass over normalized records."""
+    """Build category-scoped lookup structures in one pass over normalized records."""
 
     if not records:
         raise IndexBuildError("Cannot build index from an empty record list")
 
+    by_category: dict[PayrollCategory, list[NormalizedRecord]] = {
+        category: [] for category in PAYROLL_CATEGORIES
+    }
+    for record in records:
+        by_category[record.category].append(record)
+
+    category_indexes = {
+        category: _build_category_index(category, by_category[category])
+        for category in PAYROLL_CATEGORIES
+    }
+    index = MappingIndex(
+        category_indexes=_freeze_mapping(category_indexes),
+        categories=PAYROLL_CATEGORIES,
+        total_records=len(records),
+    )
+
+    summary = index.summary()
+    logger.info(
+        "Built category-scoped mapping index: %d categories, %d prior codes, %d records",
+        summary["totalCategories"],
+        summary["totalPriorCodes"],
+        summary["totalRecords"],
+        extra=log_extra(
+            "mapping_index_built",
+            category_count=summary["totalCategories"],
+            prior_code_count=summary["totalPriorCodes"],
+            record_count=summary["totalRecords"],
+        ),
+    )
+    return index
+
+
+def _build_category_index(
+    category: PayrollCategory,
+    records: Sequence[NormalizedRecord],
+) -> CategoryMappingIndex:
     all_rows: dict[str, list[NormalizedRecord]] = defaultdict(list)
     unique_codes: dict[str, set[str]] = defaultdict(set)
     occurrence_counts: dict[str, dict[str, int]] = defaultdict(lambda: defaultdict(int))
@@ -110,7 +210,8 @@ def build_index(records: Sequence[NormalizedRecord]) -> MappingIndex:
         if global_code not in first_seen_order[prior_code]:
             first_seen_order[prior_code][global_code] = record.candidateIndex
 
-    index = MappingIndex(
+    return CategoryMappingIndex(
+        category=category,
         all_rows=_freeze_mapping({key: tuple(value) for key, value in all_rows.items()}),
         unique_codes=_freeze_mapping(
             {key: frozenset(value) for key, value in unique_codes.items()}
@@ -123,25 +224,8 @@ def build_index(records: Sequence[NormalizedRecord]) -> MappingIndex:
         total_records=len(records),
     )
 
-    summary = index.summary()
-    logger.info(
-        "Built mapping index: %d prior codes, %d records, %d one-to-one, %d ambiguous",
-        summary["totalPriorCodes"],
-        summary["totalRecords"],
-        summary["oneToOnePriorCodes"],
-        summary["ambiguousPriorCodes"],
-        extra=log_extra(
-            "mapping_index_built",
-            prior_code_count=summary["totalPriorCodes"],
-            record_count=summary["totalRecords"],
-            one_to_one_count=summary["oneToOnePriorCodes"],
-            ambiguous_count=summary["ambiguousPriorCodes"],
-        ),
-    )
-    return index
 
-
-def _freeze_mapping(value: Mapping[str, T]) -> Mapping[str, T]:
+def _freeze_mapping(value: Mapping[T, Any]) -> Mapping[T, Any]:
     return MappingProxyType(dict(value))
 
 

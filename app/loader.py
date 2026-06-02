@@ -9,7 +9,7 @@ from pathlib import Path
 
 from pydantic import ValidationError as PydanticValidationError
 
-from app.config import DatasetSource, settings
+from app.config import PAYROLL_CATEGORIES, DatasetSource, PayrollCategory, settings
 from app.exceptions import DatasetLoadError, DatasetSchemaError, RecordValidationError
 from app.logging_utils import log_extra
 from app.schemas import NormalizedRecord, RawCandidateRecord
@@ -17,6 +17,7 @@ from app.schemas import NormalizedRecord, RawCandidateRecord
 logger = logging.getLogger(__name__)
 
 RawDataset = dict[object, object]
+CORE_RECORD_FIELDS = frozenset({"globalCode", "LastModifiedDate"})
 
 
 def load_dataset(
@@ -30,9 +31,9 @@ def load_dataset(
     effective_source = _resolve_source(source)
     raw_json = _read_raw_json(effective_source, path=path)
     records = _normalize(raw_json, strict=strict)
-    prior_code_count = len({record.priorCode for record in records})
+    prior_code_count = len({(record.category, record.priorCode) for record in records})
     logger.info(
-        "Loaded payroll dataset from %s: %d prior codes, %d candidate records",
+        "Loaded payroll dataset from %s: %d category-scoped prior codes, %d candidate records",
         effective_source.value,
         prior_code_count,
         len(records),
@@ -144,52 +145,67 @@ def _read_from_azure() -> RawDataset:
 
 
 def _normalize(raw: object, *, strict: bool = True) -> list[NormalizedRecord]:
-    """Normalize nested JSON into a flat list of validated records."""
+    """Normalize category-scoped JSON into flat validated records."""
 
     dataset = _validate_top_level(raw)
     records: list[NormalizedRecord] = []
     errors: list[str] = []
     global_index = 0
 
-    for prior_code_raw, candidates in dataset.items():
-        try:
-            prior_code = _normalize_code(prior_code_raw, field_name="priorCode")
-        except RecordValidationError as exc:
-            errors.append(str(exc))
-            if strict:
-                continue
-            logger.warning("Skipping invalid prior code key: %s", exc)
-            continue
-
-        if not isinstance(candidates, list):
+    for category_raw, prior_bucket in dataset.items():
+        category = _normalize_category(category_raw)
+        if not isinstance(prior_bucket, dict):
             raise DatasetSchemaError(
-                f"Expected a list of candidates for prior code '{prior_code}', "
-                f"got {type(candidates).__name__}"
+                f"Expected a prior-code object for category '{category.value}', "
+                f"got {type(prior_bucket).__name__}"
             )
-        if not candidates:
-            errors.append(f"priorCode '{prior_code}' has an empty candidate list")
+        if not prior_bucket:
+            errors.append(f"category '{category.value}' has no prior codes")
             continue
 
-        for candidate_index, candidate in enumerate(candidates):
+        for prior_code_raw, candidates in prior_bucket.items():
             try:
-                record = _parse_candidate(
-                    prior_code=prior_code,
-                    candidate_index=candidate_index,
-                    candidate=candidate,
-                    global_index=global_index,
-                )
+                prior_code = _normalize_code(prior_code_raw, field_name="priorCode")
             except RecordValidationError as exc:
-                message = (
-                    f"priorCode='{prior_code}' candidateIndex={candidate_index}: {exc}"
-                )
+                errors.append(str(exc))
                 if strict:
-                    errors.append(message)
-                else:
-                    logger.warning("Skipping malformed record: %s", message)
+                    continue
+                logger.warning("Skipping invalid prior code key: %s", exc)
                 continue
 
-            records.append(record)
-            global_index += 1
+            if not isinstance(candidates, list):
+                raise DatasetSchemaError(
+                    f"Expected a list of candidates for category '{category.value}' "
+                    f"prior code '{prior_code}', got {type(candidates).__name__}"
+                )
+            if not candidates:
+                errors.append(
+                    f"category='{category.value}' priorCode '{prior_code}' has an empty candidate list"
+                )
+                continue
+
+            for candidate_index, candidate in enumerate(candidates):
+                try:
+                    record = _parse_candidate(
+                        category=category,
+                        prior_code=prior_code,
+                        candidate_index=candidate_index,
+                        candidate=candidate,
+                        global_index=global_index,
+                    )
+                except RecordValidationError as exc:
+                    message = (
+                        f"category='{category.value}' priorCode='{prior_code}' "
+                        f"candidateIndex={candidate_index}: {exc}"
+                    )
+                    if strict:
+                        errors.append(message)
+                    else:
+                        logger.warning("Skipping malformed record: %s", message)
+                    continue
+
+                records.append(record)
+                global_index += 1
 
     if errors and strict:
         preview = "; ".join(errors[:10])
@@ -215,10 +231,26 @@ def _validate_top_level(raw: object) -> RawDataset:
         )
     if not raw:
         raise DatasetSchemaError("Dataset is empty: no prior codes found")
+    allowed = {category.value for category in PAYROLL_CATEGORIES}
+    unknown = sorted(str(key) for key in raw if str(key).strip() not in allowed)
+    if unknown:
+        raise DatasetSchemaError(
+            f"Top-level dataset categories must be {sorted(allowed)}; unknown={unknown}"
+        )
     return raw
 
 
+def _normalize_category(value: object) -> PayrollCategory:
+    normalized = str(value).strip()
+    try:
+        return PayrollCategory(normalized)
+    except ValueError as exc:
+        allowed = [category.value for category in PAYROLL_CATEGORIES]
+        raise DatasetSchemaError(f"category must be one of {allowed}, got '{value}'") from exc
+
+
 def _parse_candidate(
+    category: PayrollCategory,
     prior_code: str,
     candidate_index: int,
     candidate: object,
@@ -236,13 +268,20 @@ def _parse_candidate(
 
     global_code = _normalize_code(raw_record.globalCode, field_name="globalCode")
     parsed_date = _parse_date(raw_record.LastModifiedDate, prior_code, candidate_index)
+    metadata = {
+        key: value
+        for key, value in candidate.items()
+        if key not in CORE_RECORD_FIELDS
+    }
 
     return NormalizedRecord(
+        category=category,
         priorCode=prior_code,
         globalCode=global_code,
         lastModifiedDate=parsed_date,
         candidateIndex=candidate_index,
         globalIndex=global_index,
+        metadata=metadata,
     )
 
 

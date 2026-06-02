@@ -1,36 +1,29 @@
-"""Optional bounded GPT adjudication layer for tied payroll mappings."""
+"""Optional bounded GPT fallback layer for missing payroll mappings."""
 
 from __future__ import annotations
 
 import json
 import logging
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from typing import Any
 
-from app.config import PrecedenceMode, settings
+from app.config import PAYROLL_CATEGORIES, PayrollCategory, settings
 from app.exceptions import GPTAdjudicationError
 from app.logging_utils import log_extra
-from app.prompt_builder import build_missing_prior_prompt
+from app.prompt_builder import (
+    NO_MATCH_GLOBAL_CODE,
+    build_missing_prior_batch_prompt,
+    build_missing_prior_prompt,
+)
+from app.schemas import CategoryMappingResponse
 
 logger = logging.getLogger(__name__)
 
-_SYSTEM_PROMPT = """You are a payroll code adjudication component for an enterprise banking system.
+_SYSTEM_PROMPT = """You are a payroll code recommendation component.
 
-Select exactly one winner from the provided global-code candidates.
-
-Output rules:
-- Return only a JSON object.
-- The JSON object must have exactly one key: "winner".
-- The value must be one of the provided candidate codes exactly.
-- Do not include explanations, markdown, scores, or new codes.
+Return only strict JSON matching the requested schema. Do not include explanations, markdown,
+scores, confidence, or extra keys. Never invent codes.
 """
-
-_MISSING_PRIOR_SYSTEM_PROMPT = """You are a payroll code recommendation component.
-
-You must select one global payroll code from the provided list, or return NO_MATCH.
-Return only the selected code. Do not include explanations, markdown, scores, or new codes.
-"""
-
 
 GptAdjudicationError = GPTAdjudicationError
 
@@ -41,84 +34,53 @@ class GptClient:
     def __init__(self, client: Any | None = None) -> None:
         self._client: Any | None = client if client is not None else self._build_client()
 
-    def adjudicate(
-        self,
-        *,
-        prior_code: str,
-        candidates: list[str],
-        mode: PrecedenceMode,
-        occurrence_counts: dict[str, int],
-        latest_dates: dict[str, str],
-    ) -> tuple[str, str]:
-        if not self._client:
-            raise GPTAdjudicationError("OpenAI client is not configured")
-        if not candidates:
-            raise GPTAdjudicationError("No tied candidates supplied")
-
-        raw_response = self._call_api(
-            system_prompt=_SYSTEM_PROMPT,
-            user_message=self._build_user_message(
-                prior_code=prior_code,
-                candidates=candidates,
-                mode=mode,
-                occurrence_counts=occurrence_counts,
-                latest_dates=latest_dates,
-            ),
-            response_format_json=True,
-        )
-        winner = self._parse_response(raw_response, valid_candidates=candidates)
-        return winner, raw_response
-
     def recommend_global_code(
         self,
         *,
         prior_code: str,
-        candidate_codes: Sequence[str],
-    ) -> str:
-        """Recommend one global code for a prior code missing from history."""
+        catalogs: Mapping[PayrollCategory, Sequence[str]],
+        catalog_evidence: Mapping[PayrollCategory, Sequence[Mapping[str, Any]]],
+    ) -> CategoryMappingResponse:
+        """Recommend category-scoped global-code mappings for one missing prior code."""
 
         if not self._client:
             raise GPTAdjudicationError("OpenAI client is not configured")
 
-        candidates = list(candidate_codes)
-        if not candidates:
-            raise GPTAdjudicationError("No global code candidates supplied")
-
         raw_response = self._call_api(
-            system_prompt=_MISSING_PRIOR_SYSTEM_PROMPT,
+            system_prompt=_SYSTEM_PROMPT,
             user_message=build_missing_prior_prompt(
                 prior_code=prior_code,
-                candidate_codes=candidates,
+                catalogs=catalogs,
+                catalog_evidence=catalog_evidence,
             ),
-            response_format_json=False,
+            response_format_json=True,
         )
-        return self._parse_plain_code_response(raw_response)
+        return self._parse_category_response(raw_response, allowed_catalogs=catalogs)
 
-    @staticmethod
-    def _build_user_message(
+    def recommend_global_codes(
+        self,
         *,
-        prior_code: str,
-        candidates: list[str],
-        mode: PrecedenceMode,
-        occurrence_counts: dict[str, int],
-        latest_dates: dict[str, str],
-    ) -> str:
-        evidence = [
-            {
-                "globalCode": code,
-                "occurrenceCount": occurrence_counts.get(code, 0),
-                "latestDate": latest_dates.get(code),
-            }
-            for code in candidates
-        ]
-        payload = {
-            "priorCode": prior_code,
-            "mode": mode.value,
-            "candidates": candidates,
-            "evidence": evidence,
-            "requiredResponseShape": {"winner": "<one candidate code>"},
-        }
-        return json.dumps(payload, separators=(",", ":"))
+        prior_codes: Sequence[str],
+        catalogs: Mapping[PayrollCategory, Sequence[str]],
+        catalog_evidence: Mapping[PayrollCategory, Sequence[Mapping[str, Any]]],
+    ) -> CategoryMappingResponse:
+        """Recommend category-scoped global-code mappings for missing prior codes."""
+
+        if not self._client:
+            raise GPTAdjudicationError("OpenAI client is not configured")
+        if not prior_codes:
+            raise GPTAdjudicationError("No missing prior codes supplied")
+
+        raw_response = self._call_api(
+            system_prompt=_SYSTEM_PROMPT,
+            user_message=build_missing_prior_batch_prompt(
+                prior_codes=prior_codes,
+                catalogs=catalogs,
+                catalog_evidence=catalog_evidence,
+            ),
+            response_format_json=True,
+        )
+        return self._parse_category_response(raw_response, allowed_catalogs=catalogs)
 
     def _call_api(
         self,
@@ -142,7 +104,7 @@ class GptClient:
         logger.info("===== GPT CALL STARTED =====")
         try:
             response = self._client.chat.completions.create(**request)
-            logger.info(f"RAW GPT RESPONSE: {response}")
+            logger.info("RAW GPT RESPONSE: %s", response)
             content = response.choices[0].message.content
         except TypeError as exc:
             if not response_format_json:
@@ -150,7 +112,7 @@ class GptClient:
             request.pop("response_format", None)
             try:
                 response = self._client.chat.completions.create(**request)
-                logger.info(f"RAW GPT RESPONSE: {response}")
+                logger.info("RAW GPT RESPONSE: %s", response)
                 content = response.choices[0].message.content
             except Exception as retry_exc:
                 raise GPTAdjudicationError(
@@ -164,36 +126,51 @@ class GptClient:
         return content.strip()
 
     @staticmethod
-    def _parse_plain_code_response(raw_response: str) -> str:
-        cleaned = raw_response.strip()
-        if cleaned.startswith("```"):
-            cleaned = "\n".join(
-                line for line in cleaned.splitlines() if not line.strip().startswith("```")
-            ).strip()
-        return cleaned.strip().strip('"').strip("'").upper()
-
-    @staticmethod
-    def _parse_response(raw_response: str, *, valid_candidates: list[str]) -> str:
-        cleaned = raw_response.strip()
-        if cleaned.startswith("```"):
-            cleaned = "\n".join(
-                line for line in cleaned.splitlines() if not line.strip().startswith("```")
-            ).strip()
-
+    def _parse_category_response(
+        raw_response: str,
+        *,
+        allowed_catalogs: Mapping[PayrollCategory, Sequence[str]],
+    ) -> CategoryMappingResponse:
+        cleaned = _strip_code_fences(raw_response)
         try:
             parsed = json.loads(cleaned)
         except json.JSONDecodeError as exc:
             raise GPTAdjudicationError(f"GPT returned invalid JSON: {raw_response}") from exc
 
-        if not isinstance(parsed, dict) or set(parsed.keys()) != {"winner"}:
-            raise GPTAdjudicationError(f"GPT response must contain only 'winner': {parsed}")
-
-        winner = str(parsed["winner"]).strip().upper()
-        if winner not in valid_candidates:
+        expected_keys = {category.value for category in PAYROLL_CATEGORIES}
+        if not isinstance(parsed, dict) or set(parsed.keys()) != expected_keys:
             raise GPTAdjudicationError(
-                f"GPT winner '{winner}' is not in tied candidates {valid_candidates}"
+                f"GPT response must contain exactly category keys {sorted(expected_keys)}"
             )
-        return winner
+
+        allowed_by_category = {
+            category: {str(code).strip().upper() for code in allowed_catalogs.get(category, ())}
+            for category in PAYROLL_CATEGORIES
+        }
+        payload: dict[str, list[dict[str, str]]] = {}
+        for category in PAYROLL_CATEGORIES:
+            raw_items = parsed[category.value]
+            if not isinstance(raw_items, list):
+                raise GPTAdjudicationError(f"GPT category '{category.value}' must be a list")
+
+            items: list[dict[str, str]] = []
+            for raw_item in raw_items:
+                if not isinstance(raw_item, dict) or set(raw_item.keys()) != {"priorCode", "globalCode"}:
+                    raise GPTAdjudicationError(
+                        "GPT mapping items must contain exactly priorCode and globalCode"
+                    )
+                prior_code = str(raw_item["priorCode"]).strip().upper()
+                global_code = str(raw_item["globalCode"]).strip().upper()
+                if not prior_code:
+                    raise GPTAdjudicationError("GPT returned an empty priorCode")
+                if global_code != NO_MATCH_GLOBAL_CODE and global_code not in allowed_by_category[category]:
+                    raise GPTAdjudicationError(
+                        f"GPT globalCode '{global_code}' is not allowed for {category.value}"
+                    )
+                items.append({"priorCode": prior_code, "globalCode": global_code})
+            payload[category.value] = items
+
+        return CategoryMappingResponse.model_validate(payload)
 
     @staticmethod
     def _build_client() -> Any | None:
@@ -241,3 +218,12 @@ class GptClient:
             extra=log_extra("gpt_client_disabled"),
         )
         return None
+
+
+def _strip_code_fences(raw_response: str) -> str:
+    cleaned = raw_response.strip()
+    if cleaned.startswith("```"):
+        cleaned = "\n".join(
+            line for line in cleaned.splitlines() if not line.strip().startswith("```")
+        ).strip()
+    return cleaned
