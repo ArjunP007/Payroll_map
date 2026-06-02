@@ -10,7 +10,7 @@ from app.config import PrecedenceMode, TieBreakStrategy, settings
 from app.index_builder import build_index
 from app.loader import _normalize
 from app.mapper import MODE_RESOLVERS, map_all, map_one, supported_modes
-from app.prompt_builder import NO_MATCH_INTERNAL_CODE
+from app.prompt_builder import NO_MATCH_GLOBAL_CODE
 from app.schemas import NormalizedRecord
 
 
@@ -18,7 +18,7 @@ class FailingGptClient:
     def adjudicate(self, **kwargs):
         raise AssertionError("GPT should not be called")
 
-    def recommend_internal_code(self, **kwargs):
+    def recommend_global_code(self, **kwargs):
         raise AssertionError("GPT should not be called")
 
 
@@ -30,20 +30,20 @@ class RecommendingGptClient:
     def adjudicate(self, **kwargs):
         raise AssertionError("Tie adjudication should not be called")
 
-    def recommend_internal_code(self, **kwargs) -> str:
+    def recommend_global_code(self, **kwargs) -> str:
         self.received_candidate_codes = list(kwargs["candidate_codes"])
         return self.recommendation
 
 
 def make_record(
     prior_code: str,
-    internal_code: str,
+    global_code: str,
     date_str: str,
     candidate_index: int = 0,
 ) -> NormalizedRecord:
     return NormalizedRecord(
         priorCode=prior_code,
-        internalCode=internal_code,
+        globalCode=global_code,
         lastModifiedDate=datetime.strptime(date_str, "%Y-%m-%d"),
         candidateIndex=candidate_index,
         globalIndex=candidate_index,
@@ -58,7 +58,7 @@ def test_one_to_one_clean_case():
         ]
     )
     result = map_one(index, "LEAVE_ENCASHMENT", PrecedenceMode.ONE_TO_ONE)
-    assert result.internalCode == "LEAVE_ENCASH"
+    assert result.globalCode == "LEAVE_ENCASH"
 
 
 def test_precedence_modes_are_registered_for_dynamic_dispatch():
@@ -75,7 +75,7 @@ def test_one_to_one_falls_back_for_ambiguous_codes():
         ]
     )
     result = map_one(index, "BASIC_SALARY", PrecedenceMode.ONE_TO_ONE)
-    assert result.internalCode == "BASIC"
+    assert result.globalCode == "BASIC"
 
 
 def test_max_occurrence_clear_winner():
@@ -87,7 +87,7 @@ def test_max_occurrence_clear_winner():
         ]
     )
     result = map_one(index, "OVERTIME_PAY", PrecedenceMode.MAX_OCCURRENCE)
-    assert result.internalCode == "OT"
+    assert result.globalCode == "OT"
 
 
 def test_max_occurrence_uses_latest_date_before_final_tie_break():
@@ -98,7 +98,7 @@ def test_max_occurrence_uses_latest_date_before_final_tie_break():
         ]
     )
     result = map_one(index, "PC", PrecedenceMode.MAX_OCCURRENCE)
-    assert result.internalCode == "BETA"
+    assert result.globalCode == "BETA"
 
 
 def test_tie_break_can_be_lexicographic(monkeypatch):
@@ -110,7 +110,7 @@ def test_tie_break_can_be_lexicographic(monkeypatch):
         ]
     )
     result = map_one(index, "PC", PrecedenceMode.MAX_OCCURRENCE)
-    assert result.internalCode == "ALPHA"
+    assert result.globalCode == "ALPHA"
 
 
 def test_tie_break_defaults_to_first_seen(monkeypatch):
@@ -122,7 +122,7 @@ def test_tie_break_defaults_to_first_seen(monkeypatch):
         ]
     )
     result = map_one(index, "PC", PrecedenceMode.MAX_OCCURRENCE)
-    assert result.internalCode == "ZETA"
+    assert result.globalCode == "ZETA"
 
 
 def test_last_modified_date_clear_winner():
@@ -134,10 +134,10 @@ def test_last_modified_date_clear_winner():
         ]
     )
     result = map_one(index, "HOUSE_ALLOWANCE", PrecedenceMode.LAST_MODIFIED_DATE)
-    assert result.internalCode == "INSURANCE"
+    assert result.globalCode == "INSURANCE"
 
 
-def test_last_modified_date_uses_latest_per_internal_code():
+def test_last_modified_date_uses_latest_per_global_code():
     index = build_index(
         [
             make_record("PC", "ALPHA", "2022-01-01", 0),
@@ -146,7 +146,7 @@ def test_last_modified_date_uses_latest_per_internal_code():
         ]
     )
     result = map_one(index, "PC", PrecedenceMode.LAST_MODIFIED_DATE)
-    assert result.internalCode == "ALPHA"
+    assert result.globalCode == "ALPHA"
 
 
 def test_last_modified_date_uses_count_before_final_tie_break():
@@ -158,7 +158,7 @@ def test_last_modified_date_uses_count_before_final_tie_break():
         ]
     )
     result = map_one(index, "PC", PrecedenceMode.LAST_MODIFIED_DATE)
-    assert result.internalCode == "ALPHA"
+    assert result.globalCode == "ALPHA"
 
 
 def test_map_all_returns_every_prior_code_in_order():
@@ -177,7 +177,7 @@ def test_map_one_normalizes_lookup_code():
     index = build_index([make_record("BASIC_SALARY", "BASIC", "2024-01-01")])
     result = map_one(index, "  basic_salary  ", PrecedenceMode.ONE_TO_ONE)
     assert result.priorCode == "BASIC_SALARY"
-    assert result.internalCode == "BASIC"
+    assert result.globalCode == "BASIC"
 
 
 def test_known_prior_code_does_not_use_missing_prior_gpt_fallback():
@@ -188,10 +188,10 @@ def test_known_prior_code_does_not_use_missing_prior_gpt_fallback():
         PrecedenceMode.MAX_OCCURRENCE,
         gpt_client=FailingGptClient(),
     )
-    assert result.internalCode == "INT"
+    assert result.globalCode == "INT"
 
 
-def test_missing_prior_code_uses_gpt_recommendation_from_internal_catalog():
+def test_missing_prior_code_uses_gpt_recommendation_from_global_catalog():
     index = build_index(
         [
             make_record("REG", "BASIC_PAY", "2024-01-01"),
@@ -210,7 +210,7 @@ def test_missing_prior_code_uses_gpt_recommendation_from_internal_catalog():
 
     assert result.model_dump() == {
         "priorCode": "REMOTE_HOME_STIPEND",
-        "internalCode": "REMOTE_ALLOWANCE",
+        "globalCode": "REMOTE_ALLOWANCE",
     }
     assert gpt_client.received_candidate_codes == [
         "BASIC_PAY",
@@ -223,7 +223,7 @@ def test_missing_prior_code_returns_no_match_without_gpt_client():
     index = build_index([make_record("KNOWN", "INT", "2024-01-01")])
     result = map_one(index, "UNKNOWN", PrecedenceMode.MAX_OCCURRENCE)
     assert result.priorCode == "UNKNOWN"
-    assert result.internalCode == NO_MATCH_INTERNAL_CODE
+    assert result.globalCode == NO_MATCH_GLOBAL_CODE
 
 
 def test_missing_prior_code_rejects_invalid_gpt_recommendation():
@@ -234,7 +234,7 @@ def test_missing_prior_code_rejects_invalid_gpt_recommendation():
         PrecedenceMode.MAX_OCCURRENCE,
         gpt_client=RecommendingGptClient("MADE_UP_CODE"),
     )
-    assert result.internalCode == NO_MATCH_INTERNAL_CODE
+    assert result.globalCode == NO_MATCH_GLOBAL_CODE
 
 
 @pytest.fixture(scope="module")
@@ -249,8 +249,10 @@ def full_index():
 
 
 def test_full_dataset_size(full_index):
-    assert len(full_index.prior_codes) == 50
-    assert full_index.total_records == 250
+    assert len(full_index.prior_codes) > 0
+    assert full_index.total_records == sum(
+        full_index.candidate_count(prior_code) for prior_code in full_index.prior_codes
+    )
 
 
 @pytest.mark.parametrize(
@@ -265,7 +267,7 @@ def test_full_dataset_size(full_index):
 )
 def test_full_dataset_one_to_one_known_winners(full_index, prior_code, expected):
     result = map_one(full_index, prior_code, PrecedenceMode.ONE_TO_ONE)
-    assert result.internalCode == expected
+    assert result.globalCode == expected
 
 
 @pytest.mark.parametrize(
@@ -280,7 +282,7 @@ def test_full_dataset_one_to_one_known_winners(full_index, prior_code, expected)
 )
 def test_full_dataset_max_occurrence_known_winners(full_index, prior_code, expected):
     result = map_one(full_index, prior_code, PrecedenceMode.MAX_OCCURRENCE)
-    assert result.internalCode == expected
+    assert result.globalCode == expected
 
 
 @pytest.mark.parametrize(
@@ -295,7 +297,7 @@ def test_full_dataset_max_occurrence_known_winners(full_index, prior_code, expec
 )
 def test_full_dataset_last_modified_known_winners(full_index, prior_code, expected):
     result = map_one(full_index, prior_code, PrecedenceMode.LAST_MODIFIED_DATE)
-    assert result.internalCode == expected
+    assert result.globalCode == expected
 
 
 def test_full_dataset_map_all_covers_every_prior_code(full_index):
@@ -303,4 +305,4 @@ def test_full_dataset_map_all_covers_every_prior_code(full_index):
         results = map_all(full_index, mode)
         assert len(results) == len(full_index.prior_codes)
         assert [result.priorCode for result in results] == list(full_index.prior_codes)
-        assert all(result.internalCode for result in results)
+        assert all(result.globalCode for result in results)

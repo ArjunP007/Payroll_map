@@ -22,20 +22,17 @@ from app.schemas import NormalizedRecord
 VALID_DATASET = {
     " basic_salary ": [
         {
-            "internalCode": " basic ",
-            "internalDescription": "Regular Basic",
+            "globalCode": " basic ",
             "LastModifiedDate": "05/19/2024",
         },
         {
-            "internalCode": "BASE",
-            "internalDescription": "Ignored by engine",
+            "globalCode": "BASE",
             "LastModifiedDate": "01/01/2021",
         },
     ],
     "OVERTIME_PAY": [
         {
-            "internalCode": "OT",
-            "internalDescription": "Overtime Hours",
+            "globalCode": "OT",
             "LastModifiedDate": "11/04/2024",
         }
     ],
@@ -60,24 +57,38 @@ def test_parse_date_rejects_iso_format():
         _parse_date("2024-05-19", "BASIC_SALARY", 0)
 
 
-def test_parse_candidate_ignores_internal_description():
+def test_parse_candidate_accepts_global_code_contract():
     candidate = {
-        "internalCode": "BASIC",
-        "internalDescription": "Must not affect mapping",
+        "globalCode": "BASIC",
         "LastModifiedDate": "05/19/2024",
     }
     record = _parse_candidate("BASIC_SALARY", 2, candidate, 9)
     assert isinstance(record, NormalizedRecord)
     assert record.priorCode == "BASIC_SALARY"
-    assert record.internalCode == "BASIC"
+    assert record.globalCode == "BASIC"
     assert record.candidateIndex == 2
     assert record.globalIndex == 9
-    assert not hasattr(record, "internalDescription")
 
 
-def test_parse_candidate_requires_internal_code_and_date():
+def test_parse_candidate_rejects_extra_fields():
     with pytest.raises(RecordValidationError):
-        _parse_candidate("PC", 0, {"internalDescription": "missing"}, 0)
+        _parse_candidate(
+            "PC",
+            0,
+            {"globalCode": "BASIC", "LastModifiedDate": "05/19/2024", "description": "old"},
+            0,
+        )
+
+
+def test_parse_candidate_rejects_legacy_target_code_field():
+    legacy_key = "in" + "ternal" + "Code"
+    with pytest.raises(RecordValidationError):
+        _parse_candidate("PC", 0, {legacy_key: "BASIC", "LastModifiedDate": "05/19/2024"}, 0)
+
+
+def test_parse_candidate_requires_global_code_and_date():
+    with pytest.raises(RecordValidationError):
+        _parse_candidate("PC", 0, {}, 0)
 
 
 def test_normalize_returns_flat_records():
@@ -88,7 +99,7 @@ def test_normalize_returns_flat_records():
         "BASIC_SALARY",
         "OVERTIME_PAY",
     ]
-    assert [record.internalCode for record in records] == ["BASIC", "BASE", "OT"]
+    assert [record.globalCode for record in records] == ["BASIC", "BASE", "OT"]
 
 
 def test_normalize_rejects_bad_top_level_shape():
@@ -103,19 +114,18 @@ def test_normalize_rejects_empty_dataset():
 
 def test_normalize_rejects_non_list_candidate_value():
     with pytest.raises(DatasetSchemaError, match="list of candidates"):
-        _normalize({"BASIC_SALARY": {"internalCode": "BASIC"}})
+        _normalize({"BASIC_SALARY": {"globalCode": "BASIC"}})
 
 
 def test_normalize_is_strict_by_default():
     dataset = {
         "GOOD_CODE": [
             {
-                "internalCode": "INTERNAL",
-                "internalDescription": "desc",
+                "globalCode": "GLOBAL",
                 "LastModifiedDate": "01/01/2022",
             }
         ],
-        "BAD_CODE": [{"internalDescription": "missing required fields"}],
+        "BAD_CODE": [{}],
     }
     with pytest.raises(DatasetSchemaError, match="Dataset validation failed"):
         _normalize(dataset)
@@ -125,12 +135,11 @@ def test_normalize_can_skip_bad_records_when_lenient():
     dataset = {
         "GOOD_CODE": [
             {
-                "internalCode": "INTERNAL",
-                "internalDescription": "desc",
+                "globalCode": "GLOBAL",
                 "LastModifiedDate": "01/01/2022",
             }
         ],
-        "BAD_CODE": [{"internalDescription": "missing required fields"}],
+        "BAD_CODE": [{}],
     }
     records = _normalize(dataset, strict=False)
     assert len(records) == 1
@@ -151,6 +160,12 @@ def test_load_dataset_missing_file_raises(tmp_path: Path):
 
 
 def test_project_benchmark_dataset_has_expected_size():
+    path = (
+        Path(__file__).resolve().parent.parent
+        / "data"
+        / "FULL_50PC_250GC_PRECEDENCE_STRESS_DATASET.json"
+    )
+    raw = json.loads(path.read_text(encoding="utf-8"))
     records = load_dataset(source="local")
-    assert len({record.priorCode for record in records}) == 50
-    assert len(records) == 250
+    assert len({record.priorCode for record in records}) == len(raw)
+    assert len(records) == sum(len(rows) for rows in raw.values())

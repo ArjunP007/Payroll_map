@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 _SYSTEM_PROMPT = """You are a payroll code adjudication component for an enterprise banking system.
 
-Select exactly one winner from the provided internal-code candidates.
+Select exactly one winner from the provided global-code candidates.
 
 Output rules:
 - Return only a JSON object.
@@ -27,7 +27,7 @@ Output rules:
 
 _MISSING_PRIOR_SYSTEM_PROMPT = """You are a payroll code recommendation component.
 
-You must select one internal payroll code from the provided list, or return NO_MATCH.
+You must select one global payroll code from the provided list, or return NO_MATCH.
 Return only the selected code. Do not include explanations, markdown, scores, or new codes.
 """
 
@@ -69,20 +69,20 @@ class GptClient:
         winner = self._parse_response(raw_response, valid_candidates=candidates)
         return winner, raw_response
 
-    def recommend_internal_code(
+    def recommend_global_code(
         self,
         *,
         prior_code: str,
         candidate_codes: Sequence[str],
     ) -> str:
-        """Recommend one internal code for a prior code missing from history."""
+        """Recommend one global code for a prior code missing from history."""
 
         if not self._client:
             raise GPTAdjudicationError("OpenAI client is not configured")
 
         candidates = list(candidate_codes)
         if not candidates:
-            raise GPTAdjudicationError("No internal code candidates supplied")
+            raise GPTAdjudicationError("No global code candidates supplied")
 
         raw_response = self._call_api(
             system_prompt=_MISSING_PRIOR_SYSTEM_PROMPT,
@@ -105,7 +105,7 @@ class GptClient:
     ) -> str:
         evidence = [
             {
-                "internalCode": code,
+                "globalCode": code,
                 "occurrenceCount": occurrence_counts.get(code, 0),
                 "latestDate": latest_dates.get(code),
             }

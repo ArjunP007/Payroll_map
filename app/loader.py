@@ -234,12 +234,12 @@ def _parse_candidate(
     except PydanticValidationError as exc:
         raise RecordValidationError(str(exc)) from exc
 
-    internal_code = _normalize_code(raw_record.internalCode, field_name="internalCode")
+    global_code = _normalize_code(raw_record.globalCode, field_name="globalCode")
     parsed_date = _parse_date(raw_record.LastModifiedDate, prior_code, candidate_index)
 
     return NormalizedRecord(
         priorCode=prior_code,
-        internalCode=internal_code,
+        globalCode=global_code,
         lastModifiedDate=parsed_date,
         candidateIndex=candidate_index,
         globalIndex=global_index,

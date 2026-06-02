@@ -12,10 +12,9 @@ from app.config import DatasetSource, PrecedenceMode
 class RawCandidateRecord(BaseModel):
     """One raw candidate object from the nested source JSON."""
 
-    model_config = ConfigDict(extra="ignore")
+    model_config = ConfigDict(extra="forbid")
 
-    internalCode: str = Field(min_length=1)
-    internalDescription: str = Field(default="")
+    globalCode: str = Field(min_length=1)
     LastModifiedDate: str = Field(min_length=1)
 
 
@@ -25,7 +24,7 @@ class NormalizedRecord(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     priorCode: str
-    internalCode: str
+    globalCode: str
     lastModifiedDate: datetime
     candidateIndex: int = Field(ge=0)
     globalIndex: int = Field(ge=0)
@@ -37,11 +36,11 @@ class MappingResult(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     priorCode: str
-    internalCode: str
+    globalCode: str
 
 
 class MappingDecisionDetail(BaseModel):
-    """Internal audit detail. Never returned from public mapping endpoints."""
+    """Mapping audit detail. Never returned from public mapping endpoints."""
 
     priorCode: str
     winningCode: str

@@ -2,7 +2,7 @@
 
 Enterprise-style batch payroll code-mapping backend.
 
-The service loads historical nested JSON mappings, normalizes them, builds in-memory indexes, applies a selected precedence rule, and returns only final `priorCode -> internalCode` mappings.
+The service loads historical nested JSON mappings, normalizes them, builds in-memory indexes, applies a selected precedence rule, and returns only final `priorCode -> globalCode` mappings.
 
 ## Project Structure
 
@@ -59,8 +59,8 @@ Response is a strict JSON array only:
 
 ```json
 [
-  {"priorCode": "BASIC_SALARY", "internalCode": "BASIC"},
-  {"priorCode": "OVERTIME_PAY", "internalCode": "OT"}
+  {"priorCode": "BASIC_SALARY", "globalCode": "BASIC"},
+  {"priorCode": "OVERTIME_PAY", "globalCode": "OT"}
 ]
 ```
 
@@ -78,7 +78,7 @@ Adding a deterministic mode means adding a resolver and registering it with
 
 Known prior codes always use the deterministic precedence engine. GPT is used
 only when a single prior-code lookup is missing from the historical dataset.
-The fallback sends only the missing prior code and the sorted internal-code
+The fallback sends only the missing prior code and the sorted global-code
 catalog from the dataset, never the full historical JSON.
 
 ```http
@@ -88,14 +88,14 @@ GET /api/v1/map/REMOTE_HOME_STIPEND?mode=MAX_OCCURRENCE
 Response shape remains the same mapping object:
 
 ```json
-{"priorCode": "REMOTE_HOME_STIPEND", "internalCode": "REMOTE_ALLOWANCE"}
+{"priorCode": "REMOTE_HOME_STIPEND", "globalCode": "REMOTE_ALLOWANCE"}
 ```
 
 If GPT is unavailable or returns a code outside the allowed catalog, the service
 returns:
 
 ```json
-{"priorCode": "REMOTE_HOME_STIPEND", "internalCode": "NO_MATCH"}
+{"priorCode": "REMOTE_HOME_STIPEND", "globalCode": "NO_MATCH"}
 ```
 
 ## Configuration

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 
-NO_MATCH_INTERNAL_CODE = "NO_MATCH"
+NO_MATCH_GLOBAL_CODE = "NO_MATCH"
 
 
 def build_missing_prior_prompt(prior_code: str, candidate_codes: Sequence[str]) -> str:
@@ -15,14 +15,14 @@ def build_missing_prior_prompt(prior_code: str, candidate_codes: Sequence[str]) 
     return (
         "You are a payroll mapping engine.\n\n"
         "Task:\n"
-        "Recommend the BEST matching payroll internal code.\n\n"
+        "Recommend the BEST matching payroll global code.\n\n"
         f"Input Prior Code:\n{normalized_prior_code}\n\n"
-        f"Available Internal Codes:\n{catalog}\n\n"
+        f"Available Global Codes:\n{catalog}\n\n"
         "Rules:\n"
-        "1. Select EXACTLY ONE internal code.\n"
+        "1. Select EXACTLY ONE global code.\n"
         "2. Use payroll semantic similarity.\n"
         "3. No explanation.\n"
         "4. No reasoning.\n"
-        "5. Return ONLY the selected internal code.\n"
-        f"6. If no reasonable match exists, return {NO_MATCH_INTERNAL_CODE}."
+        "5. Return ONLY the selected global code.\n"
+        f"6. If no reasonable match exists, return {NO_MATCH_GLOBAL_CODE}."
     )

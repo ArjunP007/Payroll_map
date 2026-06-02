@@ -35,31 +35,31 @@ def validate_loaded_records(records: Sequence[NormalizedRecord]) -> None:
         raise ValidationError("Dataset is empty")
 
     prior_codes = {record.priorCode for record in records}
-    internal_codes = {record.internalCode for record in records}
+    global_codes = {record.globalCode for record in records}
     if not prior_codes:
         raise ValidationError("Dataset contains no prior codes")
-    if not internal_codes:
-        raise ValidationError("Dataset contains no internal codes")
+    if not global_codes:
+        raise ValidationError("Dataset contains no global codes")
 
     bad_dates = [record for record in records if not isinstance(record.lastModifiedDate, datetime)]
     if bad_dates:
         raise ValidationError(f"{len(bad_dates)} records have invalid parsed dates")
 
     empty_codes = [
-        record for record in records if not record.priorCode.strip() or not record.internalCode.strip()
+        record for record in records if not record.priorCode.strip() or not record.globalCode.strip()
     ]
     if empty_codes:
         raise ValidationError(f"{len(empty_codes)} records contain empty codes")
 
     logger.info(
-        "Dataset validation passed: %d prior codes, %d internal codes, %d records",
+        "Dataset validation passed: %d prior codes, %d global codes, %d records",
         len(prior_codes),
-        len(internal_codes),
+        len(global_codes),
         len(records),
         extra=log_extra(
             "dataset_validation_passed",
             prior_code_count=len(prior_codes),
-            internal_code_count=len(internal_codes),
+            global_code_count=len(global_codes),
             record_count=len(records),
         ),
     )
@@ -86,12 +86,12 @@ def validate_mapping_results(
         duplicates = sorted({code for code in actual if actual.count(code) > 1})
         raise ValidationError(f"Duplicate prior codes in mapping results: {duplicates}")
 
-    empty_internal = [result.priorCode for result in results if not result.internalCode.strip()]
-    if empty_internal:
+    empty_global = [result.priorCode for result in results if not result.globalCode.strip()]
+    if empty_global:
         raise ValidationError(
-            f"{len(empty_internal)} mappings have empty internalCode: {empty_internal}"
+            f"{len(empty_global)} mappings have empty globalCode: {empty_global}"
         )
 
     for result in results:
-        if set(result.model_dump().keys()) != {"priorCode", "internalCode"}:
-            raise ValidationError(f"Mapping result leaked internal fields: {result}")
+        if set(result.model_dump().keys()) != {"priorCode", "globalCode"}:
+            raise ValidationError(f"Mapping result leaked non-contract fields: {result}")

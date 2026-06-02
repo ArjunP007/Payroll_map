@@ -33,7 +33,7 @@ class MappingIndex:
     occurrence_counts: IntMetricsByPrior
     latest_dates: DateMetricsByPrior
     first_seen_order: IntMetricsByPrior
-    all_internal_codes: frozenset[str]
+    all_global_codes: frozenset[str]
     prior_codes: tuple[str, ...]
     total_records: int
 
@@ -60,7 +60,7 @@ class MappingIndex:
         prior_code: str,
         candidates: Sequence[str] | None = None,
     ) -> list[dict[str, str | int]]:
-        """Return bounded internal evidence for logging or GPT adjudication."""
+        """Return bounded candidate evidence for logging or GPT adjudication."""
 
         selected = list(candidates or sorted(self.unique_codes[prior_code]))
         counts = self.occurrence_counts[prior_code]
@@ -68,7 +68,7 @@ class MappingIndex:
         first_seen = self.first_seen_order[prior_code]
         return [
             {
-                "internalCode": code,
+                "globalCode": code,
                 "occurrenceCount": counts[code],
                 "latestDate": dates[code].strftime("%Y-%m-%d"),
                 "firstSeenOrder": first_seen[code],
@@ -88,27 +88,27 @@ def build_index(records: Sequence[NormalizedRecord]) -> MappingIndex:
     occurrence_counts: dict[str, dict[str, int]] = defaultdict(lambda: defaultdict(int))
     latest_dates: dict[str, dict[str, datetime]] = defaultdict(dict)
     first_seen_order: dict[str, dict[str, int]] = defaultdict(dict)
-    internal_code_catalog: set[str] = set()
+    global_code_catalog: set[str] = set()
     prior_order: list[str] = []
 
     for record in records:
         prior_code = record.priorCode
-        internal_code = record.internalCode
+        global_code = record.globalCode
 
         if prior_code not in all_rows:
             prior_order.append(prior_code)
 
         all_rows[prior_code].append(record)
-        unique_codes[prior_code].add(internal_code)
-        internal_code_catalog.add(internal_code)
-        occurrence_counts[prior_code][internal_code] += 1
+        unique_codes[prior_code].add(global_code)
+        global_code_catalog.add(global_code)
+        occurrence_counts[prior_code][global_code] += 1
 
-        previous_date = latest_dates[prior_code].get(internal_code)
+        previous_date = latest_dates[prior_code].get(global_code)
         if previous_date is None or record.lastModifiedDate > previous_date:
-            latest_dates[prior_code][internal_code] = record.lastModifiedDate
+            latest_dates[prior_code][global_code] = record.lastModifiedDate
 
-        if internal_code not in first_seen_order[prior_code]:
-            first_seen_order[prior_code][internal_code] = record.candidateIndex
+        if global_code not in first_seen_order[prior_code]:
+            first_seen_order[prior_code][global_code] = record.candidateIndex
 
     index = MappingIndex(
         all_rows=_freeze_mapping({key: tuple(value) for key, value in all_rows.items()}),
@@ -118,7 +118,7 @@ def build_index(records: Sequence[NormalizedRecord]) -> MappingIndex:
         occurrence_counts=_freeze_nested_ints(occurrence_counts),
         latest_dates=_freeze_nested_dates(latest_dates),
         first_seen_order=_freeze_nested_ints(first_seen_order),
-        all_internal_codes=frozenset(internal_code_catalog),
+        all_global_codes=frozenset(global_code_catalog),
         prior_codes=tuple(prior_order),
         total_records=len(records),
     )

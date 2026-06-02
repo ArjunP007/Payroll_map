@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import json
+from pathlib import Path
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -12,13 +15,24 @@ def client():
         yield test_client
 
 
-def test_health_returns_loaded_dataset(client: TestClient):
+@pytest.fixture(scope="module")
+def dataset_counts() -> tuple[int, int]:
+    path = (
+        Path(__file__).resolve().parent.parent
+        / "data"
+        / "FULL_50PC_250GC_PRECEDENCE_STRESS_DATASET.json"
+    )
+    raw = json.loads(path.read_text(encoding="utf-8"))
+    return len(raw), sum(len(rows) for rows in raw.values())
+
+
+def test_health_returns_loaded_dataset(client: TestClient, dataset_counts: tuple[int, int]):
     response = client.get("/api/v1/health")
     assert response.status_code == 200
     data = response.json()
     assert data["datasetLoaded"] is True
-    assert data["priorCodeCount"] == 50
-    assert data["recordCount"] == 250
+    assert data["priorCodeCount"] == dataset_counts[0]
+    assert data["recordCount"] == dataset_counts[1]
 
 
 def test_root_redirects_to_health(client: TestClient):
@@ -28,12 +42,16 @@ def test_root_redirects_to_health(client: TestClient):
 
 
 @pytest.mark.parametrize("mode", ["ONE_TO_ONE", "MAX_OCCURRENCE", "LAST_MODIFIED_DATE"])
-def test_map_endpoint_accepts_all_modes(client: TestClient, mode: str):
+def test_map_endpoint_accepts_all_modes(
+    client: TestClient,
+    dataset_counts: tuple[int, int],
+    mode: str,
+):
     response = client.post("/api/v1/map", json={"mode": mode})
     assert response.status_code == 200
     results = response.json()
     assert isinstance(results, list)
-    assert len(results) == 50
+    assert len(results) == dataset_counts[0]
 
 
 def test_map_endpoint_accepts_lowercase_mode(client: TestClient):
@@ -46,7 +64,7 @@ def test_single_map_endpoint_returns_known_prior_code(client: TestClient):
     assert response.status_code == 200
     assert response.json() == {
         "priorCode": "ADVANCE_RECOVERY",
-        "internalCode": "ADV_RECOVERY",
+        "globalCode": "ADV_RECOVERY",
     }
 
 
@@ -55,7 +73,7 @@ def test_single_map_endpoint_returns_no_match_for_missing_prior_without_gpt(clie
     assert response.status_code == 200
     assert response.json() == {
         "priorCode": "REMOTE_HOME_STIPEND",
-        "internalCode": "NO_MATCH",
+        "globalCode": "NO_MATCH",
     }
 
 
@@ -64,7 +82,7 @@ def test_map_endpoint_returns_strict_result_array(client: TestClient):
     results = response.json()
     assert isinstance(results, list)
     for item in results:
-        assert set(item.keys()) == {"priorCode", "internalCode"}
+        assert set(item.keys()) == {"priorCode", "globalCode"}
 
 
 def test_map_endpoint_does_not_return_reasoning(client: TestClient):
@@ -94,13 +112,13 @@ def test_map_endpoint_is_deterministic(client: TestClient):
 
 def test_known_api_winner_for_max_occurrence(client: TestClient):
     results = client.post("/api/v1/map", json={"mode": "MAX_OCCURRENCE"}).json()
-    mapping = {item["priorCode"]: item["internalCode"] for item in results}
+    mapping = {item["priorCode"]: item["globalCode"] for item in results}
     assert mapping["ADVANCE_RECOVERY"] == "ADV_RECOVERY"
 
 
 def test_known_api_winner_for_last_modified_date(client: TestClient):
     results = client.post("/api/v1/map", json={"mode": "LAST_MODIFIED_DATE"}).json()
-    mapping = {item["priorCode"]: item["internalCode"] for item in results}
+    mapping = {item["priorCode"]: item["globalCode"] for item in results}
     assert mapping["HOUSE_ALLOWANCE"] == "INSURANCE"
 
 
@@ -114,13 +132,13 @@ def test_missing_mode_returns_422(client: TestClient):
     assert response.status_code == 422
 
 
-def test_reload_local_rebuilds_index(client: TestClient):
+def test_reload_local_rebuilds_index(client: TestClient, dataset_counts: tuple[int, int]):
     response = client.post("/api/v1/reload", json={"source": "local"})
     assert response.status_code == 200
     data = response.json()
     assert data["status"] == "ok"
-    assert data["priorCodeCount"] == 50
-    assert data["recordCount"] == 250
+    assert data["priorCodeCount"] == dataset_counts[0]
+    assert data["recordCount"] == dataset_counts[1]
 
 
 def test_invalid_reload_source_returns_422(client: TestClient):
@@ -128,9 +146,9 @@ def test_invalid_reload_source_returns_422(client: TestClient):
     assert response.status_code == 422
 
 
-def test_prior_codes_endpoint(client: TestClient):
+def test_prior_codes_endpoint(client: TestClient, dataset_counts: tuple[int, int]):
     response = client.get("/api/v1/prior-codes")
     assert response.status_code == 200
     data = response.json()
-    assert data["totalPriorCodes"] == 50
+    assert data["totalPriorCodes"] == dataset_counts[0]
     assert "ADVANCE_RECOVERY" in data["priorCodes"]

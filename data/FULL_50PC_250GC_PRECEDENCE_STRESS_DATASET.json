@@ -1,426 +1,349 @@
 {
   "BASIC_SALARY": [
     {
-      "internalCode": "BONUS",
-      "internalDescription": "Tax Deduction",
+      "globalCode": "BONUS",
       "LastModifiedDate": "10/23/2021"
     },
     {
-      "internalCode": "EMPLOYEE_PF",
-      "internalDescription": "Benefit",
+      "globalCode": "EMPLOYEE_PF",
       "LastModifiedDate": "04/21/2023"
     },
     {
-      "internalCode": "LEAVE_ENCASH",
-      "internalDescription": "Bonus",
+      "globalCode": "LEAVE_ENCASH",
       "LastModifiedDate": "08/12/2023"
     },
     {
-      "internalCode": "TRANSPORT",
-      "internalDescription": "Benefit",
+      "globalCode": "TRANSPORT",
       "LastModifiedDate": "01/04/2024"
     },
     {
-      "internalCode": "MEDICAL",
-      "internalDescription": "Tax Deduction",
+      "globalCode": "MEDICAL",
       "LastModifiedDate": "04/18/2023"
     },
     {
-      "internalCode": "ATTENDANCE_INCENTIVE",
-      "internalDescription": "Tax Deduction",
+      "globalCode": "ATTENDANCE_INCENTIVE",
       "LastModifiedDate": "04/05/2024"
     },
     {
-      "internalCode": "SHIFT_PREMIUM",
-      "internalDescription": "Bonus",
+      "globalCode": "SHIFT_PREMIUM",
       "LastModifiedDate": "06/08/2020"
     }
   ],
   "OVERTIME_PAY": [
     {
-      "internalCode": "BASIC",
-      "internalDescription": "Bonus",
+      "globalCode": "BASIC",
       "LastModifiedDate": "05/17/2022"
     },
     {
-      "internalCode": "PERFORMANCE_BONUS",
-      "internalDescription": "Deduction",
+      "globalCode": "PERFORMANCE_BONUS",
       "LastModifiedDate": "01/16/2023"
     },
     {
-      "internalCode": "PTAX",
-      "internalDescription": "Allowance Payment",
+      "globalCode": "PTAX",
       "LastModifiedDate": "07/10/2021"
     },
     {
-      "internalCode": "SUPPLEMENTAL_PAY",
-      "internalDescription": "Supplemental Earnings",
+      "globalCode": "SUPPLEMENTAL_PAY",
       "LastModifiedDate": "10/28/2022"
     }
   ],
   "HOUSE_ALLOWANCE": [
     {
-      "internalCode": "BASE",
-      "internalDescription": "Tax Deduction",
+      "globalCode": "BASE",
       "LastModifiedDate": "08/14/2022"
     },
     {
-      "internalCode": "HOUSE_RENT_ALLOWANCE",
-      "internalDescription": "Supplemental Earnings",
+      "globalCode": "HOUSE_RENT_ALLOWANCE",
       "LastModifiedDate": "07/14/2023"
     },
     {
-      "internalCode": "INSURANCE",
-      "internalDescription": "Supplemental Earnings",
+      "globalCode": "INSURANCE",
       "LastModifiedDate": "05/28/2024"
     },
     {
-      "internalCode": "COMMISSION",
-      "internalDescription": "Bonus",
+      "globalCode": "COMMISSION",
       "LastModifiedDate": "08/08/2020"
     }
   ],
   "DEARNESS_ALLOWANCE": [
     {
-      "internalCode": "TRAVEL_ALLOWANCE",
-      "internalDescription": "Benefit",
+      "globalCode": "TRAVEL_ALLOWANCE",
       "LastModifiedDate": "04/10/2024"
     },
     {
-      "internalCode": "TRAVEL_ALLOWANCE",
-      "internalDescription": "Allowance",
+      "globalCode": "TRAVEL_ALLOWANCE",
       "LastModifiedDate": "10/08/2020"
     },
     {
-      "internalCode": "TRAVEL_ALLOWANCE",
-      "internalDescription": "Tax Deduction",
+      "globalCode": "TRAVEL_ALLOWANCE",
       "LastModifiedDate": "02/25/2020"
     }
   ],
   "SHIFT_ALLOWANCE": [
     {
-      "internalCode": "EMPLOYER_PF",
-      "internalDescription": "Allowance Payment",
+      "globalCode": "EMPLOYER_PF",
       "LastModifiedDate": "01/01/2022"
     },
     {
-      "internalCode": "LEAVE",
-      "internalDescription": "Recovery",
+      "globalCode": "LEAVE",
       "LastModifiedDate": "06/04/2023"
     },
     {
-      "internalCode": "SPECIAL_PAY",
-      "internalDescription": "Tax Deduction",
+      "globalCode": "SPECIAL_PAY",
       "LastModifiedDate": "05/22/2024"
     },
     {
-      "internalCode": "INS_PREMIUM",
-      "internalDescription": "Payroll Adjustment",
+      "globalCode": "INS_PREMIUM",
       "LastModifiedDate": "07/25/2020"
     },
     {
-      "internalCode": "INS_PREMIUM",
-      "internalDescription": "Employee Benefit",
+      "globalCode": "INS_PREMIUM",
       "LastModifiedDate": "11/06/2023"
     },
     {
-      "internalCode": "LEAVE",
-      "internalDescription": "Tax Deduction",
+      "globalCode": "LEAVE",
       "LastModifiedDate": "06/17/2020"
     },
     {
-      "internalCode": "ESIC",
-      "internalDescription": "Incentive",
+      "globalCode": "ESIC",
       "LastModifiedDate": "04/21/2021"
     }
   ],
   "BONUS_PAYMENT": [
     {
-      "internalCode": "RETRO",
-      "internalDescription": "Allowance Payment",
+      "globalCode": "RETRO",
       "LastModifiedDate": "09/25/2021"
     },
     {
-      "internalCode": "MED_ALLOW",
-      "internalDescription": "Recovery",
+      "globalCode": "MED_ALLOW",
       "LastModifiedDate": "10/16/2020"
     },
     {
-      "internalCode": "NIGHT_SHIFT",
-      "internalDescription": "Employee Benefit",
+      "globalCode": "NIGHT_SHIFT",
       "LastModifiedDate": "10/01/2022"
     }
   ],
   "PROFESSIONAL_TAX": [
     {
-      "internalCode": "DEARNESS",
-      "internalDescription": "Incentive",
+      "globalCode": "DEARNESS",
       "LastModifiedDate": "10/16/2024"
     },
     {
-      "internalCode": "DEARNESS",
-      "internalDescription": "Allowance",
+      "globalCode": "DEARNESS",
       "LastModifiedDate": "12/06/2022"
     }
   ],
   "PF_DEDUCTION": [
     {
-      "internalCode": "ADVANCE",
-      "internalDescription": "Benefit",
+      "globalCode": "ADVANCE",
       "LastModifiedDate": "03/14/2021"
     },
     {
-      "internalCode": "OTHER_EARNINGS",
-      "internalDescription": "Tax Deduction",
+      "globalCode": "OTHER_EARNINGS",
       "LastModifiedDate": "09/02/2022"
     },
     {
-      "internalCode": "ADVANCE",
-      "internalDescription": "Bonus",
+      "globalCode": "ADVANCE",
       "LastModifiedDate": "09/13/2024"
     }
   ],
   "ESI_DEDUCTION": [
     {
-      "internalCode": "VACATION_PAY",
-      "internalDescription": "Benefit",
+      "globalCode": "VACATION_PAY",
       "LastModifiedDate": "05/19/2024"
     }
   ],
   "LOAN_RECOVERY": [
     {
-      "internalCode": "MEAL_ALLOWANCE",
-      "internalDescription": "Allowance Payment",
+      "globalCode": "MEAL_ALLOWANCE",
       "LastModifiedDate": "01/06/2021"
     },
     {
-      "internalCode": "MEAL_ALLOWANCE",
-      "internalDescription": "Allowance",
+      "globalCode": "MEAL_ALLOWANCE",
       "LastModifiedDate": "09/12/2021"
     }
   ],
   "LEAVE_ENCASHMENT": [
     {
-      "internalCode": "VACATION_PAY",
-      "internalDescription": "Allowance Payment",
+      "globalCode": "VACATION_PAY",
       "LastModifiedDate": "12/08/2021"
     },
     {
-      "internalCode": "VACATION_PAY",
-      "internalDescription": "Regular Hours",
+      "globalCode": "VACATION_PAY",
       "LastModifiedDate": "01/27/2024"
     },
     {
-      "internalCode": "SHIFT_PREMIUM",
-      "internalDescription": "Supplemental Earnings",
+      "globalCode": "SHIFT_PREMIUM",
       "LastModifiedDate": "07/13/2024"
     },
     {
-      "internalCode": "OT",
-      "internalDescription": "Allowance Payment",
+      "globalCode": "OT",
       "LastModifiedDate": "03/20/2020"
     }
   ],
   "ARREAR_PAYMENT": [
     {
-      "internalCode": "REGULAR_HOURS",
-      "internalDescription": "Payroll Adjustment",
+      "globalCode": "REGULAR_HOURS",
       "LastModifiedDate": "06/28/2024"
     }
   ],
   "RETRO_PAYMENT": [
     {
-      "internalCode": "OVERTIME",
-      "internalDescription": "Overtime",
+      "globalCode": "OVERTIME",
       "LastModifiedDate": "10/08/2022"
     },
     {
-      "internalCode": "OVERTIME",
-      "internalDescription": "Allowance",
+      "globalCode": "OVERTIME",
       "LastModifiedDate": "04/16/2021"
     },
     {
-      "internalCode": "OVERTIME",
-      "internalDescription": "Allowance Payment",
+      "globalCode": "OVERTIME",
       "LastModifiedDate": "08/26/2024"
     }
   ],
   "SPECIAL_ALLOWANCE": [
     {
-      "internalCode": "BASIC_REGULAR",
-      "internalDescription": "Payroll Adjustment",
+      "globalCode": "BASIC_REGULAR",
       "LastModifiedDate": "05/08/2022"
     },
     {
-      "internalCode": "DA",
-      "internalDescription": "Benefit",
+      "globalCode": "DA",
       "LastModifiedDate": "08/16/2021"
     },
     {
-      "internalCode": "PROF_TAX",
-      "internalDescription": "Allowance",
+      "globalCode": "PROF_TAX",
       "LastModifiedDate": "12/03/2020"
     },
     {
-      "internalCode": "SPECIAL_ALLOW",
-      "internalDescription": "Allowance",
+      "globalCode": "SPECIAL_ALLOW",
       "LastModifiedDate": "11/07/2021"
     },
     {
-      "internalCode": "EMPLOYER_PF",
-      "internalDescription": "Supplemental Earnings",
+      "globalCode": "EMPLOYER_PF",
       "LastModifiedDate": "09/04/2021"
     }
   ],
   "TRANSPORT_ALLOWANCE": [
     {
-      "internalCode": "DEARNESS",
-      "internalDescription": "Employee Benefit",
+      "globalCode": "DEARNESS",
       "LastModifiedDate": "09/20/2022"
     },
     {
-      "internalCode": "ESI",
-      "internalDescription": "Payroll Adjustment",
+      "globalCode": "ESI",
       "LastModifiedDate": "05/15/2022"
     },
     {
-      "internalCode": "ARREAR",
-      "internalDescription": "Deduction",
+      "globalCode": "ARREAR",
       "LastModifiedDate": "08/22/2022"
     },
     {
-      "internalCode": "ADJUSTMENT",
-      "internalDescription": "Deduction",
+      "globalCode": "ADJUSTMENT",
       "LastModifiedDate": "02/06/2023"
     }
   ],
   "MEDICAL_ALLOWANCE": [
     {
-      "internalCode": "HRA",
-      "internalDescription": "Employee Benefit",
+      "globalCode": "HRA",
       "LastModifiedDate": "08/09/2024"
     },
     {
-      "internalCode": "MEDICAL",
-      "internalDescription": "Bonus",
+      "globalCode": "MEDICAL",
       "LastModifiedDate": "08/26/2023"
     },
     {
-      "internalCode": "MEDICAL",
-      "internalDescription": "Tax Deduction",
+      "globalCode": "MEDICAL",
       "LastModifiedDate": "11/06/2021"
     }
   ],
   "INSURANCE_DEDUCTION": [
     {
-      "internalCode": "STAT_BONUS",
-      "internalDescription": "Allowance",
+      "globalCode": "STAT_BONUS",
       "LastModifiedDate": "03/04/2020"
     },
     {
-      "internalCode": "MISC",
-      "internalDescription": "Overtime",
+      "globalCode": "MISC",
       "LastModifiedDate": "11/06/2020"
     },
     {
-      "internalCode": "STAT_DEDUCTION",
-      "internalDescription": "Incentive",
+      "globalCode": "STAT_DEDUCTION",
       "LastModifiedDate": "10/22/2020"
     },
     {
-      "internalCode": "STAT_BONUS",
-      "internalDescription": "Tax Deduction",
+      "globalCode": "STAT_BONUS",
       "LastModifiedDate": "10/09/2022"
     }
   ],
   "ADVANCE_RECOVERY": [
     {
-      "internalCode": "SHIFT",
-      "internalDescription": "Deduction",
+      "globalCode": "SHIFT",
       "LastModifiedDate": "06/19/2022"
     },
     {
-      "internalCode": "PF",
-      "internalDescription": "Benefit",
+      "globalCode": "PF",
       "LastModifiedDate": "11/17/2022"
     },
     {
-      "internalCode": "LOAN_DEDUCTION",
-      "internalDescription": "Tax Deduction",
+      "globalCode": "LOAN_DEDUCTION",
       "LastModifiedDate": "04/10/2023"
     },
     {
-      "internalCode": "ADV_RECOVERY",
-      "internalDescription": "Payroll Adjustment",
+      "globalCode": "ADV_RECOVERY",
       "LastModifiedDate": "10/01/2024"
     },
     {
-      "internalCode": "INCENTIVE",
-      "internalDescription": "Allowance",
+      "globalCode": "INCENTIVE",
       "LastModifiedDate": "03/03/2021"
     },
     {
-      "internalCode": "ADV_RECOVERY",
-      "internalDescription": "Incentive",
+      "globalCode": "ADV_RECOVERY",
       "LastModifiedDate": "06/07/2022"
     },
     {
-      "internalCode": "ADV_RECOVERY",
-      "internalDescription": "Bonus",
+      "globalCode": "ADV_RECOVERY",
       "LastModifiedDate": "11/09/2024"
     },
     {
-      "internalCode": "ADJUSTMENT",
-      "internalDescription": "Allowance",
+      "globalCode": "ADJUSTMENT",
       "LastModifiedDate": "06/23/2022"
     },
     {
-      "internalCode": "ARREAR",
-      "internalDescription": "Employee Benefit",
+      "globalCode": "ARREAR",
       "LastModifiedDate": "05/01/2020"
     }
   ],
   "MISC_PAYROLL": [
     {
-      "internalCode": "REG",
-      "internalDescription": "Allowance Payment",
+      "globalCode": "REG",
       "LastModifiedDate": "04/13/2022"
     },
     {
-      "internalCode": "LEAVE",
-      "internalDescription": "Employee Benefit",
+      "globalCode": "LEAVE",
       "LastModifiedDate": "09/20/2024"
     }
   ],
   "COMMISSION_PAY": [
     {
-      "internalCode": "OT",
-      "internalDescription": "Tax Deduction",
+      "globalCode": "OT",
       "LastModifiedDate": "12/12/2022"
     },
     {
-      "internalCode": "SHIFT_PREMIUM",
-      "internalDescription": "Benefit",
+      "globalCode": "SHIFT_PREMIUM",
       "LastModifiedDate": "05/04/2021"
     },
     {
-      "internalCode": "ESIC",
-      "internalDescription": "Recovery",
+      "globalCode": "ESIC",
       "LastModifiedDate": "07/18/2024"
     },
     {
-      "internalCode": "LOAN",
-      "internalDescription": "Allowance Payment",
+      "globalCode": "LOAN",
       "LastModifiedDate": "11/20/2023"
     },
     {
-      "internalCode": "COMMISSION",
-      "internalDescription": "Benefit",
+      "globalCode": "COMMISSION",
       "LastModifiedDate": "03/04/2023"
     },
     {
-      "internalCode": "LOAN",
-      "internalDescription": "Deduction",
+      "globalCode": "LOAN",
       "LastModifiedDate": "07/21/2021"
     }
   ]
