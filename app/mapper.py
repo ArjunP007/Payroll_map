@@ -471,7 +471,7 @@ def _try_gpt_adjudication(
             extra=log_extra("gpt_adjudication_failed", prior_code=detail.priorCode),
         )
         return deterministic_winner, detail
-    except Exception as exc:
+    except Exception:
         logger.exception(
             "Unexpected GPT provider failure for priorCode=%s. Using deterministic winner=%s",
             detail.priorCode,
