@@ -13,29 +13,47 @@ NO_MATCH_GLOBAL_CODE = "NO_MATCH"
 
 def build_missing_prior_prompt(
     prior_code: str,
+    category: PayrollCategory,
     catalogs: Mapping[PayrollCategory, Sequence[str]],
     catalog_evidence: Mapping[PayrollCategory, Sequence[Mapping[str, Any]]] | None = None,
 ) -> str:
     """Build the constrained prompt for one missing historical prior code."""
 
     return build_missing_prior_batch_prompt(
-        prior_codes=[prior_code],
+        prior_codes_by_category={category: [prior_code]},
         catalogs=catalogs,
         catalog_evidence=catalog_evidence,
     )
 
 
 def build_missing_prior_batch_prompt(
-    prior_codes: Sequence[str],
+    prior_codes_by_category: Mapping[PayrollCategory, Sequence[str]],
     catalogs: Mapping[PayrollCategory, Sequence[str]],
     catalog_evidence: Mapping[PayrollCategory, Sequence[Mapping[str, Any]]] | None = None,
 ) -> str:
     """Build the constrained prompt for category-aware batch fallback."""
 
-    normalized_prior_codes = [prior_code.strip().upper() for prior_code in prior_codes]
+    selected_categories = tuple(
+        category
+        for category in PAYROLL_CATEGORIES
+        if prior_codes_by_category.get(category)
+    )
+    normalized_prior_codes_by_category = {
+        category.value: [
+            prior_code.strip().upper()
+            for prior_code in prior_codes_by_category.get(category, ())
+        ]
+        for category in selected_categories
+    }
     payload = {
-        "missingPriorCodes": normalized_prior_codes,
+        "missingPriorCodesByCategory": normalized_prior_codes_by_category,
+        "selectedCategories": [category.value for category in selected_categories],
         "categories": _category_catalog_payload(catalogs, catalog_evidence or {}),
+        "internalConfidenceGuidance": {
+            "purpose": "Use confidence only for internal selection. Never return confidence.",
+            "minimumRecommendedConfidence": 0.72,
+            "lowConfidenceAction": NO_MATCH_GLOBAL_CODE,
+        },
         "requiredOutputShape": {
             category.value: [{"priorCode": "<input prior code>", "globalCode": "<catalog code or NO_MATCH>"}]
             for category in PAYROLL_CATEGORIES
@@ -56,7 +74,9 @@ def build_missing_prior_batch_prompt(
         "4. Choose globalCode only from the catalog for that same category.\n"
         f"5. Use {NO_MATCH_GLOBAL_CODE} when no confident mapping exists.\n"
         "6. Never invent global codes.\n"
-        "7. Do not include prose, markdown, confidence, scores, explanations, or extra keys.\n\n"
+        "7. Produce confidence internally for selection quality, but never return confidence.\n"
+        "8. Do not include prose, markdown, scores, explanations, or extra keys.\n"
+        "9. For categories without requested missing prior codes, return an empty list.\n\n"
         "Payload:\n"
         f"{json.dumps(payload, default=str, separators=(',', ':'))}"
     )

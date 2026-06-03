@@ -38,6 +38,7 @@ class GptClient:
         self,
         *,
         prior_code: str,
+        category: PayrollCategory,
         catalogs: Mapping[PayrollCategory, Sequence[str]],
         catalog_evidence: Mapping[PayrollCategory, Sequence[Mapping[str, Any]]],
     ) -> CategoryMappingResponse:
@@ -50,6 +51,7 @@ class GptClient:
             system_prompt=_SYSTEM_PROMPT,
             user_message=build_missing_prior_prompt(
                 prior_code=prior_code,
+                category=category,
                 catalogs=catalogs,
                 catalog_evidence=catalog_evidence,
             ),
@@ -60,7 +62,7 @@ class GptClient:
     def recommend_global_codes(
         self,
         *,
-        prior_codes: Sequence[str],
+        prior_codes_by_category: Mapping[PayrollCategory, Sequence[str]],
         catalogs: Mapping[PayrollCategory, Sequence[str]],
         catalog_evidence: Mapping[PayrollCategory, Sequence[Mapping[str, Any]]],
     ) -> CategoryMappingResponse:
@@ -68,13 +70,13 @@ class GptClient:
 
         if not self._client:
             raise GPTAdjudicationError("OpenAI client is not configured")
-        if not prior_codes:
+        if not any(prior_codes_by_category.values()):
             raise GPTAdjudicationError("No missing prior codes supplied")
 
         raw_response = self._call_api(
             system_prompt=_SYSTEM_PROMPT,
             user_message=build_missing_prior_batch_prompt(
-                prior_codes=prior_codes,
+                prior_codes_by_category=prior_codes_by_category,
                 catalogs=catalogs,
                 catalog_evidence=catalog_evidence,
             ),

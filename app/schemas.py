@@ -95,11 +95,12 @@ class MappingDecisionDetail(BaseModel):
 
 
 class MappingRequest(BaseModel):
-    """Batch mapping request. The caller selects only the precedence mode."""
+    """Batch mapping request for all known prior codes in selected categories."""
 
     model_config = ConfigDict(extra="forbid")
 
     mode: PrecedenceMode
+    categories: list[PayrollCategory] = Field(min_length=1)
 
     @field_validator("mode", mode="before")
     @classmethod
@@ -107,6 +108,13 @@ class MappingRequest(BaseModel):
         if isinstance(value, str):
             return value.strip().upper()
         return value
+
+    @field_validator("categories")
+    @classmethod
+    def validate_categories(cls, values: list[PayrollCategory]) -> list[PayrollCategory]:
+        if not values:
+            raise ValueError("categories must contain at least one category")
+        return _dedupe_categories(values)
 
 
 class BatchMappingRequest(BaseModel):
@@ -115,6 +123,7 @@ class BatchMappingRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     mode: PrecedenceMode
+    categories: list[PayrollCategory] = Field(min_length=1)
     priorCodes: list[str] = Field(min_length=1)
 
     @field_validator("mode", mode="before")
@@ -123,6 +132,13 @@ class BatchMappingRequest(BaseModel):
         if isinstance(value, str):
             return value.strip().upper()
         return value
+
+    @field_validator("categories")
+    @classmethod
+    def validate_categories(cls, values: list[PayrollCategory]) -> list[PayrollCategory]:
+        if not values:
+            raise ValueError("categories must contain at least one category")
+        return _dedupe_categories(values)
 
     @field_validator("priorCodes")
     @classmethod
@@ -134,6 +150,11 @@ class BatchMappingRequest(BaseModel):
                 raise ValueError("priorCodes cannot contain empty values")
             normalized.append(code)
         return normalized
+
+
+def _dedupe_categories(values: list[PayrollCategory]) -> list[PayrollCategory]:
+    selected = set(values)
+    return [category for category in PAYROLL_CATEGORIES if category in selected]
 
 
 class ReloadRequest(BaseModel):

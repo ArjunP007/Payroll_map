@@ -4,13 +4,14 @@ from __future__ import annotations
 
 import logging
 from contextlib import asynccontextmanager
+from typing import Annotated
 
-from fastapi import FastAPI, Request, status
+from fastapi import FastAPI, Query, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, RedirectResponse
 
 from app.azure_storage import load_secrets_from_key_vault
-from app.config import PrecedenceMode, configure_logging, settings
+from app.config import PayrollCategory, PrecedenceMode, configure_logging, settings
 from app.engine import PayrollMappingEngine
 from app.exceptions import (
     DatasetLoadError,
@@ -227,11 +228,16 @@ async def health() -> HealthResponse:
 )
 async def batch_map(request: MappingRequest) -> CategoryMappingResponse:
     logger.info(
-        "Batch mapping request: mode=%s",
+        "Batch mapping request: mode=%s categories=%s",
         request.mode.value,
-        extra=log_extra("mapping_request", mode=request.mode.value),
+        [category.value for category in request.categories],
+        extra=log_extra(
+            "mapping_request",
+            mode=request.mode.value,
+            categories=[category.value for category in request.categories],
+        ),
     )
-    return engine.map_all(request.mode)
+    return engine.map_all(mode=request.mode, categories=request.categories)
 
 
 @app.post(
@@ -242,16 +248,22 @@ async def batch_map(request: MappingRequest) -> CategoryMappingResponse:
 )
 async def batch_lookup(request: BatchMappingRequest) -> CategoryMappingResponse:
     logger.info(
-        "Batch lookup request: mode=%s priorCodes=%d",
+        "Batch lookup request: mode=%s categories=%s priorCodes=%d",
         request.mode.value,
+        [category.value for category in request.categories],
         len(request.priorCodes),
         extra=log_extra(
             "batch_lookup_request",
             mode=request.mode.value,
+            categories=[category.value for category in request.categories],
             prior_code_count=len(request.priorCodes),
         ),
     )
-    return engine.map_batch(prior_codes=request.priorCodes, mode=request.mode)
+    return engine.map_batch(
+        prior_codes=request.priorCodes,
+        mode=request.mode,
+        categories=request.categories,
+    )
 
 
 @app.get(
@@ -262,15 +274,33 @@ async def batch_lookup(request: BatchMappingRequest) -> CategoryMappingResponse:
 )
 async def map_single_prior_code(
     prior_code: str,
+    selectedCategories: Annotated[
+        list[PayrollCategory],
+        Query(
+            ...,
+            min_length=1,
+            description="Required category selection. Choose one or more EDT categories.",
+        ),
+    ],
     mode: PrecedenceMode = settings.default_mode,
 ) -> CategoryMappingResponse:
     logger.info(
-        "Single mapping request: priorCode=%s mode=%s",
+        "Single mapping request: priorCode=%s mode=%s categories=%s",
         prior_code,
         mode.value,
-        extra=log_extra("single_mapping_request", prior_code=prior_code, mode=mode.value),
+        [category.value for category in selectedCategories],
+        extra=log_extra(
+            "single_mapping_request",
+            prior_code=prior_code,
+            mode=mode.value,
+            categories=[category.value for category in selectedCategories],
+        ),
     )
-    return engine.map_one(prior_code=prior_code, mode=mode)
+    return engine.map_one(
+        prior_code=prior_code,
+        mode=mode,
+        categories=selectedCategories,
+    )
 
 
 @app.post(

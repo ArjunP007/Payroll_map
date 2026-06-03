@@ -90,7 +90,7 @@ Deterministic mapping uses only `priorCode`, `globalCode`, and `LastModifiedDate
 POST /api/v1/map
 Content-Type: application/json
 
-{"mode": "MAX_OCCURRENCE"}
+{"mode": "MAX_OCCURRENCE", "categories": ["Earnings", "Deductions", "Taxes"]}
 ```
 
 Response is strict EDT-grouped JSON:
@@ -123,9 +123,10 @@ Adding a deterministic mode means adding a resolver and registering it with
 ## Single And Batch Lookup
 
 Known prior codes always use the deterministic precedence engine within each category namespace.
+Category selection is required and is represented as enum-backed multi-select input in Swagger.
 
 ```http
-GET /api/v1/map/REMOTE_HOME_STIPEND?mode=MAX_OCCURRENCE
+GET /api/v1/map/REMOTE_HOME_STIPEND?selectedCategories=Earnings&selectedCategories=Taxes&mode=MAX_OCCURRENCE
 ```
 
 Selected prior codes can be resolved in one request:
@@ -134,10 +135,14 @@ Selected prior codes can be resolved in one request:
 POST /api/v1/map/batch
 Content-Type: application/json
 
-{"mode": "MAX_OCCURRENCE", "priorCodes": ["ADVANCE_RECOVERY", "REMOTE_HOME_STIPEND"]}
+{
+  "mode": "MAX_OCCURRENCE",
+  "categories": ["Earnings", "Deductions", "Taxes"],
+  "priorCodes": ["ADVANCE_RECOVERY", "REMOTE_HOME_STIPEND"]
+}
 ```
 
-GPT is used only when a requested prior code is missing from all historical category buckets. The fallback receives the missing prior code list, category-wise global-code catalogs, and metadata-rich candidate evidence when available. GPT output is validated and must use the same EDT shape:
+GPT is used only when a requested prior code is missing in a selected category. The fallback receives only the selected category catalogs, the missing prior code list by category, and metadata-rich candidate evidence when available. GPT output is validated and must use the same EDT shape:
 
 ```json
 {

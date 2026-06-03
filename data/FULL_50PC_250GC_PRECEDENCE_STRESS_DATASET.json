@@ -1,5 +1,23 @@
  {
  "Earnings": {
+      "REG": [
+
+      {
+        "globalCode":"BASIC",
+        "LastModifiedDate":"01/01/2024"
+      },
+
+      {
+        "globalCode":"BASIC",
+        "LastModifiedDate":"02/01/2024"
+      },
+
+      {
+        "globalCode":"SALARY",
+        "LastModifiedDate":"12/31/2025"
+      }
+
+    ],
     "ARREAR_PAYMENT": [
       {
         "globalCode": "PERFORMANCE_BONUS",
@@ -454,6 +472,12 @@
         "vendorLabel": "VENDOR_E_1"
       }
     ],
+    "ADJUSTMENT": [
+      {
+        "globalCode": "ADJUSTMENT_PAY",
+        "LastModifiedDate": "05/01/2025"
+      }
+    ],
     "SPECIAL_ALLOWANCE": [
       {
         "globalCode": "INCENTIVE",
@@ -904,6 +928,12 @@
     ]
   },
   "Taxes": {
+    "ADJUSTMENT": [
+      {
+        "globalCode": "TAX_ADJUSTMENT",
+        "LastModifiedDate": "05/01/2025"
+      }
+    ],
     "CAPITAL_GAINS_TAX": [
       {
         "globalCode": "QUARTERLY_TAX",

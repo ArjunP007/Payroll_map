@@ -6,7 +6,7 @@ import logging
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 
-from app.config import DatasetSource, PrecedenceMode, settings
+from app.config import DatasetSource, PayrollCategory, PrecedenceMode, settings
 from app.exceptions import EngineNotReadyError
 from app.gpt_client import GptClient
 from app.index_builder import MappingIndex, build_index
@@ -109,15 +109,38 @@ class PayrollMappingEngine:
             ),
         )
 
-    def map_all(self, mode: PrecedenceMode | str) -> CategoryMappingResponse:
+    def map_all(
+        self,
+        mode: PrecedenceMode | str,
+        categories: Sequence[PayrollCategory | str],
+    ) -> CategoryMappingResponse:
         """Resolve all known prior codes and validate the strict public result shape."""
 
         index = self.require_index()
-        results = resolve_all(index=index, mode=mode, gpt_client=self._gpt_client)
-        validate_mapping_results(results, index.prior_codes_by_category())
+        results = resolve_all(
+            index=index,
+            mode=mode,
+            categories=categories,
+            gpt_client=self._gpt_client,
+        )
+        selected_categories = {
+            category if isinstance(category, PayrollCategory) else PayrollCategory(str(category).strip())
+            for category in categories
+        }
+        selected_expected = {
+            category: prior_codes
+            for category, prior_codes in index.prior_codes_by_category().items()
+            if category in selected_categories
+        }
+        validate_mapping_results(results, selected_expected)
         return results
 
-    def map_one(self, prior_code: str, mode: PrecedenceMode | str) -> CategoryMappingResponse:
+    def map_one(
+        self,
+        prior_code: str,
+        mode: PrecedenceMode | str,
+        categories: Sequence[PayrollCategory | str],
+    ) -> CategoryMappingResponse:
         """Resolve one prior code, using GPT fallback when history has no match."""
 
         index = self.require_index()
@@ -125,6 +148,7 @@ class PayrollMappingEngine:
             index=index,
             prior_code=prior_code,
             mode=mode,
+            categories=categories,
             gpt_client=self._gpt_client,
         )
         validate_category_response_contract(results)
@@ -134,6 +158,7 @@ class PayrollMappingEngine:
         self,
         prior_codes: Sequence[str],
         mode: PrecedenceMode | str,
+        categories: Sequence[PayrollCategory | str],
     ) -> CategoryMappingResponse:
         """Resolve a batch of known and missing prior codes."""
 
@@ -142,6 +167,7 @@ class PayrollMappingEngine:
             index=index,
             prior_codes=prior_codes,
             mode=mode,
+            categories=categories,
             gpt_client=self._gpt_client,
         )
         validate_category_response_contract(results)

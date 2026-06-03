@@ -27,16 +27,19 @@ class RecommendingGptClient:
         self.response = response
         self.received_catalogs = None
         self.received_evidence = None
+        self.received_category: PayrollCategory | None = None
         self.received_prior_codes: list[str] | None = None
+        self.received_prior_codes_by_category = None
 
     def recommend_global_code(self, **kwargs) -> CategoryMappingResponse:
         self.received_prior_codes = [kwargs["prior_code"]]
+        self.received_category = kwargs["category"]
         self.received_catalogs = kwargs["catalogs"]
         self.received_evidence = kwargs["catalog_evidence"]
         return self.response
 
     def recommend_global_codes(self, **kwargs) -> CategoryMappingResponse:
-        self.received_prior_codes = list(kwargs["prior_codes"])
+        self.received_prior_codes_by_category = kwargs["prior_codes_by_category"]
         self.received_catalogs = kwargs["catalogs"]
         self.received_evidence = kwargs["catalog_evidence"]
         return self.response
@@ -73,7 +76,12 @@ def test_one_to_one_clean_case():
             make_record("LEAVE_ENCASHMENT", "LEAVE_ENCASH", "2023-01-01", 1),
         ]
     )
-    result = map_one(index, "LEAVE_ENCASHMENT", PrecedenceMode.ONE_TO_ONE)
+    result = map_one(
+        index,
+        "LEAVE_ENCASHMENT",
+        PrecedenceMode.ONE_TO_ONE,
+        categories=[PayrollCategory.EARNINGS],
+    )
     assert first_result(result, PayrollCategory.EARNINGS).globalCode == "LEAVE_ENCASH"
 
 
@@ -90,7 +98,12 @@ def test_one_to_one_falls_back_for_ambiguous_codes():
             make_record("BASIC_SALARY", "BASE", "2025-01-01", 2),
         ]
     )
-    result = map_one(index, "BASIC_SALARY", PrecedenceMode.ONE_TO_ONE)
+    result = map_one(
+        index,
+        "BASIC_SALARY",
+        PrecedenceMode.ONE_TO_ONE,
+        categories=[PayrollCategory.EARNINGS],
+    )
     assert first_result(result, PayrollCategory.EARNINGS).globalCode == "BASIC"
 
 
@@ -102,7 +115,12 @@ def test_max_occurrence_clear_winner():
             make_record("OVERTIME_PAY", "OVERTIME", "2024-01-01", 2),
         ]
     )
-    result = map_one(index, "OVERTIME_PAY", PrecedenceMode.MAX_OCCURRENCE)
+    result = map_one(
+        index,
+        "OVERTIME_PAY",
+        PrecedenceMode.MAX_OCCURRENCE,
+        categories=[PayrollCategory.EARNINGS],
+    )
     assert first_result(result, PayrollCategory.EARNINGS).globalCode == "OT"
 
 
@@ -113,7 +131,7 @@ def test_max_occurrence_uses_latest_date_before_final_tie_break():
             make_record("PC", "BETA", "2024-06-01", 1),
         ]
     )
-    result = map_one(index, "PC", PrecedenceMode.MAX_OCCURRENCE)
+    result = map_one(index, "PC", PrecedenceMode.MAX_OCCURRENCE, categories=[PayrollCategory.EARNINGS])
     assert first_result(result, PayrollCategory.EARNINGS).globalCode == "BETA"
 
 
@@ -125,7 +143,7 @@ def test_tie_break_can_be_lexicographic(monkeypatch):
             make_record("PC", "ALPHA", "2024-01-01", 1),
         ]
     )
-    result = map_one(index, "PC", PrecedenceMode.MAX_OCCURRENCE)
+    result = map_one(index, "PC", PrecedenceMode.MAX_OCCURRENCE, categories=[PayrollCategory.EARNINGS])
     assert first_result(result, PayrollCategory.EARNINGS).globalCode == "ALPHA"
 
 
@@ -137,7 +155,7 @@ def test_tie_break_defaults_to_first_seen(monkeypatch):
             make_record("PC", "ALPHA", "2024-01-01", 1),
         ]
     )
-    result = map_one(index, "PC", PrecedenceMode.MAX_OCCURRENCE)
+    result = map_one(index, "PC", PrecedenceMode.MAX_OCCURRENCE, categories=[PayrollCategory.EARNINGS])
     assert first_result(result, PayrollCategory.EARNINGS).globalCode == "ZETA"
 
 
@@ -149,7 +167,12 @@ def test_last_modified_date_clear_winner():
             make_record("HOUSE_ALLOWANCE", "INSURANCE", "2024-05-28", 2),
         ]
     )
-    result = map_one(index, "HOUSE_ALLOWANCE", PrecedenceMode.LAST_MODIFIED_DATE)
+    result = map_one(
+        index,
+        "HOUSE_ALLOWANCE",
+        PrecedenceMode.LAST_MODIFIED_DATE,
+        categories=[PayrollCategory.EARNINGS],
+    )
     assert first_result(result, PayrollCategory.EARNINGS).globalCode == "INSURANCE"
 
 
@@ -161,7 +184,7 @@ def test_last_modified_date_uses_latest_per_global_code():
             make_record("PC", "BETA", "2024-05-31", 2),
         ]
     )
-    result = map_one(index, "PC", PrecedenceMode.LAST_MODIFIED_DATE)
+    result = map_one(index, "PC", PrecedenceMode.LAST_MODIFIED_DATE, categories=[PayrollCategory.EARNINGS])
     assert first_result(result, PayrollCategory.EARNINGS).globalCode == "ALPHA"
 
 
@@ -173,7 +196,7 @@ def test_last_modified_date_uses_count_before_final_tie_break():
             make_record("PC", "BETA", "2024-01-01", 2),
         ]
     )
-    result = map_one(index, "PC", PrecedenceMode.LAST_MODIFIED_DATE)
+    result = map_one(index, "PC", PrecedenceMode.LAST_MODIFIED_DATE, categories=[PayrollCategory.EARNINGS])
     assert first_result(result, PayrollCategory.EARNINGS).globalCode == "ALPHA"
 
 
@@ -184,7 +207,12 @@ def test_deterministic_mapping_is_category_scoped_for_same_prior_code():
             make_record("SHARED_CODE", "DED", "2024-01-01", category=PayrollCategory.DEDUCTIONS),
         ]
     )
-    result = map_one(index, "shared_code", PrecedenceMode.ONE_TO_ONE)
+    result = map_one(
+        index,
+        "shared_code",
+        PrecedenceMode.ONE_TO_ONE,
+        categories=[PayrollCategory.EARNINGS, PayrollCategory.DEDUCTIONS],
+    )
     assert first_result(result, PayrollCategory.EARNINGS).globalCode == "EARN"
     assert first_result(result, PayrollCategory.DEDUCTIONS).globalCode == "DED"
     assert result.Taxes == []
@@ -197,7 +225,7 @@ def test_extra_metadata_does_not_affect_deterministic_scoring():
             make_record("PC", "BETA", "2024-06-01", 1, metadata={"payType": "better"}),
         ]
     )
-    result = map_one(index, "PC", PrecedenceMode.MAX_OCCURRENCE)
+    result = map_one(index, "PC", PrecedenceMode.MAX_OCCURRENCE, categories=[PayrollCategory.EARNINGS])
     assert first_result(result, PayrollCategory.EARNINGS).globalCode == "BETA"
 
 
@@ -209,10 +237,14 @@ def test_map_all_returns_every_prior_code_in_category_order():
             make_record("THIRD", "C", "2024-01-01", 0, category=PayrollCategory.TAXES),
         ]
     )
-    results = map_all(index, PrecedenceMode.ONE_TO_ONE)
+    results = map_all(
+        index,
+        PrecedenceMode.ONE_TO_ONE,
+        categories=[PayrollCategory.EARNINGS, PayrollCategory.DEDUCTIONS],
+    )
     assert [item.priorCode for item in results.Earnings] == ["FIRST"]
     assert [item.priorCode for item in results.Deductions] == ["SECOND"]
-    assert [item.priorCode for item in results.Taxes] == ["THIRD"]
+    assert results.Taxes == []
 
 
 def test_known_prior_code_does_not_use_missing_prior_gpt_fallback():
@@ -221,6 +253,7 @@ def test_known_prior_code_does_not_use_missing_prior_gpt_fallback():
         index,
         "KNOWN",
         PrecedenceMode.MAX_OCCURRENCE,
+        categories=[PayrollCategory.EARNINGS],
         gpt_client=FailingGptClient(),
     )
     assert first_result(result, PayrollCategory.EARNINGS).globalCode == "GLOBAL"
@@ -244,6 +277,7 @@ def test_missing_prior_code_uses_gpt_recommendation_from_category_catalogs():
         index,
         "REMOTE_HOME_STIPEND",
         PrecedenceMode.MAX_OCCURRENCE,
+        categories=[PayrollCategory.EARNINGS],
         gpt_client=gpt_client,
     )
 
@@ -253,7 +287,9 @@ def test_missing_prior_code_uses_gpt_recommendation_from_category_catalogs():
         "Taxes": [],
     }
     assert gpt_client.received_prior_codes == ["REMOTE_HOME_STIPEND"]
+    assert gpt_client.received_category == PayrollCategory.EARNINGS
     assert gpt_client.received_catalogs[PayrollCategory.EARNINGS] == ("BASIC_PAY",)
+    assert PayrollCategory.TAXES not in gpt_client.received_catalogs
     assert gpt_client.received_evidence[PayrollCategory.EARNINGS][0]["metadata"] == {
         "payType": "regular"
     }
@@ -261,11 +297,15 @@ def test_missing_prior_code_uses_gpt_recommendation_from_category_catalogs():
 
 def test_missing_prior_code_returns_no_match_without_gpt_client():
     index = build_index([make_record("KNOWN", "GLOBAL", "2024-01-01")])
-    result = map_one(index, "UNKNOWN", PrecedenceMode.MAX_OCCURRENCE)
-    for category_results in result.as_category_map().values():
-        assert category_results == [
-            MappingResult(priorCode="UNKNOWN", globalCode=NO_MATCH_GLOBAL_CODE)
-        ]
+    result = map_one(
+        index,
+        "UNKNOWN",
+        PrecedenceMode.MAX_OCCURRENCE,
+        categories=[PayrollCategory.EARNINGS, PayrollCategory.TAXES],
+    )
+    assert result.Earnings == [MappingResult(priorCode="UNKNOWN", globalCode=NO_MATCH_GLOBAL_CODE)]
+    assert result.Deductions == []
+    assert result.Taxes == [MappingResult(priorCode="UNKNOWN", globalCode=NO_MATCH_GLOBAL_CODE)]
 
 
 def test_batch_lookup_combines_deterministic_and_gpt_results():
@@ -286,12 +326,25 @@ def test_batch_lookup_combines_deterministic_and_gpt_results():
         index,
         ["KNOWN", "UNKNOWN_TAX"],
         PrecedenceMode.ONE_TO_ONE,
+        categories=[PayrollCategory.EARNINGS, PayrollCategory.TAXES],
         gpt_client=gpt_client,
     )
 
-    assert result.Earnings == [MappingResult(priorCode="KNOWN", globalCode="GLOBAL")]
-    assert result.Taxes == [MappingResult(priorCode="UNKNOWN_TAX", globalCode="TAX")]
-    assert gpt_client.received_prior_codes == ["UNKNOWN_TAX"]
+    assert result.Earnings == [
+        MappingResult(priorCode="KNOWN", globalCode="GLOBAL"),
+        MappingResult(priorCode="UNKNOWN_TAX", globalCode=NO_MATCH_GLOBAL_CODE),
+    ]
+    assert result.Taxes == [
+        MappingResult(priorCode="KNOWN", globalCode=NO_MATCH_GLOBAL_CODE),
+        MappingResult(priorCode="UNKNOWN_TAX", globalCode="TAX"),
+    ]
+    assert result.Deductions == []
+    assert gpt_client.received_prior_codes_by_category[PayrollCategory.EARNINGS] == ["UNKNOWN_TAX"]
+    assert gpt_client.received_prior_codes_by_category[PayrollCategory.TAXES] == [
+        "KNOWN",
+        "UNKNOWN_TAX",
+    ]
+    assert PayrollCategory.DEDUCTIONS not in gpt_client.received_catalogs
 
 
 @pytest.fixture(scope="module")
@@ -314,54 +367,23 @@ def test_full_dataset_size(full_index):
     )
 
 
-@pytest.mark.parametrize(
-    ("category", "prior_code", "expected"),
-    [
-        (PayrollCategory.EARNINGS, "DEARNESS_ALLOWANCE", "TRAVEL_ALLOWANCE"),
-        (PayrollCategory.EARNINGS, "RETRO_PAYMENT", "OVERTIME"),
-        (PayrollCategory.DEDUCTIONS, "ESI_DEDUCTION", "VACATION_PAY"),
-        (PayrollCategory.EARNINGS, "ARREAR_PAYMENT", "REGULAR_HOURS"),
-        (PayrollCategory.TAXES, "PROFESSIONAL_TAX", "DEARNESS"),
-    ],
-)
-def test_full_dataset_one_to_one_known_winners(full_index, category, prior_code, expected):
-    result = map_one(full_index, prior_code, PrecedenceMode.ONE_TO_ONE)
-    assert first_result(result, category).globalCode == expected
+@pytest.mark.parametrize("mode", list(PrecedenceMode))
+def test_full_dataset_single_lookup_matches_map_all_for_selected_category(full_index, mode):
+    category = PayrollCategory.DEDUCTIONS
+    prior_code = full_index.category_indexes[category].prior_codes[0]
+    all_results = map_all(full_index, mode, categories=[category])
+    expected = {
+        result.priorCode: result.globalCode
+        for result in all_results.as_category_map()[category]
+    }[prior_code]
 
-
-@pytest.mark.parametrize(
-    ("category", "prior_code", "expected"),
-    [
-        (PayrollCategory.DEDUCTIONS, "PF_DEDUCTION", "ADVANCE"),
-        (PayrollCategory.DEDUCTIONS, "ADVANCE_RECOVERY", "ADV_RECOVERY"),
-        (PayrollCategory.EARNINGS, "MEDICAL_ALLOWANCE", "MEDICAL"),
-        (PayrollCategory.EARNINGS, "SHIFT_ALLOWANCE", "INS_PREMIUM"),
-        (PayrollCategory.DEDUCTIONS, "LOAN_RECOVERY", "MEAL_ALLOWANCE"),
-    ],
-)
-def test_full_dataset_max_occurrence_known_winners(full_index, category, prior_code, expected):
-    result = map_one(full_index, prior_code, PrecedenceMode.MAX_OCCURRENCE)
-    assert first_result(result, category).globalCode == expected
-
-
-@pytest.mark.parametrize(
-    ("category", "prior_code", "expected"),
-    [
-        (PayrollCategory.EARNINGS, "HOUSE_ALLOWANCE", "INSURANCE"),
-        (PayrollCategory.DEDUCTIONS, "ADVANCE_RECOVERY", "ADV_RECOVERY"),
-        (PayrollCategory.EARNINGS, "SHIFT_ALLOWANCE", "SPECIAL_PAY"),
-        (PayrollCategory.EARNINGS, "MEDICAL_ALLOWANCE", "HRA"),
-        (PayrollCategory.EARNINGS, "DEARNESS_ALLOWANCE", "TRAVEL_ALLOWANCE"),
-    ],
-)
-def test_full_dataset_last_modified_known_winners(full_index, category, prior_code, expected):
-    result = map_one(full_index, prior_code, PrecedenceMode.LAST_MODIFIED_DATE)
-    assert first_result(result, category).globalCode == expected
+    single = map_one(full_index, prior_code, mode, categories=[category])
+    assert first_result(single, category).globalCode == expected
 
 
 def test_full_dataset_map_all_covers_every_category_prior_code(full_index):
     for mode in PrecedenceMode:
-        results = map_all(full_index, mode)
+        results = map_all(full_index, mode, categories=list(PayrollCategory))
         for category, category_index in full_index.category_indexes.items():
             actual = [result.priorCode for result in results.as_category_map()[category]]
             assert actual == list(category_index.prior_codes)

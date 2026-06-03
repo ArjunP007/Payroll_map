@@ -19,8 +19,8 @@ CATALOGS = {
 
 def test_batch_prompt_is_category_scoped_and_metadata_aware():
     prompt = build_missing_prior_batch_prompt(
-        prior_codes=["remote_home_stipend"],
-        catalogs=CATALOGS,
+        prior_codes_by_category={PayrollCategory.EARNINGS: ["remote_home_stipend"]},
+        catalogs={PayrollCategory.EARNINGS: CATALOGS[PayrollCategory.EARNINGS]},
         catalog_evidence={
             PayrollCategory.EARNINGS: [
                 {
@@ -39,6 +39,7 @@ def test_batch_prompt_is_category_scoped_and_metadata_aware():
     assert "Taxes" in prompt
     assert NO_MATCH_GLOBAL_CODE in prompt
     assert "candidateMetadata" in prompt
+    assert "internalConfidenceGuidance" in prompt
     assert "REMOTE_HOME_STIPEND" in prompt
     assert "structured JSON only" in prompt
 

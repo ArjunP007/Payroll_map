@@ -34,6 +34,7 @@ class GPTAdjudicator(Protocol):
         self,
         *,
         prior_code: str,
+        category: PayrollCategory,
         catalogs: Mapping[PayrollCategory, Sequence[str]],
         catalog_evidence: Mapping[PayrollCategory, Sequence[Mapping[str, object]]],
     ) -> CategoryMappingResponse:
@@ -42,7 +43,7 @@ class GPTAdjudicator(Protocol):
     def recommend_global_codes(
         self,
         *,
-        prior_codes: Sequence[str],
+        prior_codes_by_category: Mapping[PayrollCategory, Sequence[str]],
         catalogs: Mapping[PayrollCategory, Sequence[str]],
         catalog_evidence: Mapping[PayrollCategory, Sequence[Mapping[str, object]]],
     ) -> CategoryMappingResponse:
@@ -86,25 +87,32 @@ def supported_modes() -> tuple[PrecedenceMode, ...]:
 def map_all(
     index: MappingIndex,
     mode: PrecedenceMode | str,
+    categories: Sequence[PayrollCategory | str],
     gpt_client: GPTAdjudicator | None = None,
 ) -> CategoryMappingResponse:
     """Resolve every historical prior code within each category namespace."""
 
     del gpt_client
     resolved_mode = _coerce_mode(mode)
+    selected_categories = _normalize_categories(categories)
+    selected_prior_count = sum(
+        len(index.category_indexes[category].prior_codes)
+        for category in selected_categories
+    )
     logger.info(
         "Category-scoped batch mapping started: mode=%s priorCodes=%d",
         resolved_mode.value,
-        index.total_prior_codes,
+        selected_prior_count,
         extra=log_extra(
             "mapping_started",
             mode=resolved_mode.value,
-            prior_code_count=index.total_prior_codes,
+            prior_code_count=selected_prior_count,
+            categories=[category.value for category in selected_categories],
         ),
     )
 
     results = _empty_result_map()
-    for category in PAYROLL_CATEGORIES:
+    for category in selected_categories:
         category_index = index.category_indexes[category]
         results[category] = [
             _resolve(index=category_index, prior_code=prior_code, mode=resolved_mode)
@@ -125,29 +133,37 @@ def map_one(
     index: MappingIndex,
     prior_code: str,
     mode: PrecedenceMode | str,
+    categories: Sequence[PayrollCategory | str],
     gpt_client: GPTAdjudicator | None = None,
 ) -> CategoryMappingResponse:
     """Resolve one prior code across category namespaces."""
 
     normalized_prior_code = _normalize_prior_code(prior_code)
     resolved_mode = _coerce_mode(mode)
-    matching_categories = index.categories_for_prior_code(normalized_prior_code)
-    if not matching_categories:
-        return _resolve_missing_prior_with_gpt(
-            prior_code=normalized_prior_code,
+    selected_categories = _normalize_categories(categories)
+    results = _empty_result_map()
+    missing_by_category = _empty_missing_map(selected_categories)
+
+    for category in selected_categories:
+        category_index = index.category_indexes[category]
+        if normalized_prior_code in category_index.all_rows:
+            results[category].append(
+                _resolve(
+                    index=category_index,
+                    prior_code=normalized_prior_code,
+                    mode=resolved_mode,
+                )
+            )
+        else:
+            missing_by_category[category].append(normalized_prior_code)
+
+    if _has_missing(missing_by_category):
+        fallback = _resolve_missing_priors_with_gpt(
+            missing_prior_codes_by_category=missing_by_category,
             index=index,
             gpt_client=gpt_client,
         )
-
-    results = _empty_result_map()
-    for category in matching_categories:
-        results[category].append(
-            _resolve(
-                index=index.category_indexes[category],
-                prior_code=normalized_prior_code,
-                mode=resolved_mode,
-            )
-        )
+        _merge_response(results, fallback)
     return CategoryMappingResponse.from_category_map(results)
 
 
@@ -155,33 +171,34 @@ def map_batch(
     index: MappingIndex,
     prior_codes: Sequence[str],
     mode: PrecedenceMode | str,
+    categories: Sequence[PayrollCategory | str],
     gpt_client: GPTAdjudicator | None = None,
 ) -> CategoryMappingResponse:
     """Resolve known prior codes deterministically and missing ones through GPT fallback."""
 
     normalized_prior_codes = [_normalize_prior_code(prior_code) for prior_code in prior_codes]
     resolved_mode = _coerce_mode(mode)
+    selected_categories = _normalize_categories(categories)
     results = _empty_result_map()
-    missing_prior_codes: list[str] = []
+    missing_by_category = _empty_missing_map(selected_categories)
 
-    for prior_code in normalized_prior_codes:
-        matching_categories = index.categories_for_prior_code(prior_code)
-        if not matching_categories:
-            missing_prior_codes.append(prior_code)
-            continue
-
-        for category in matching_categories:
+    for category in selected_categories:
+        category_index = index.category_indexes[category]
+        for prior_code in normalized_prior_codes:
+            if prior_code not in category_index.all_rows:
+                missing_by_category[category].append(prior_code)
+                continue
             results[category].append(
                 _resolve(
-                    index=index.category_indexes[category],
+                    index=category_index,
                     prior_code=prior_code,
                     mode=resolved_mode,
                 )
             )
 
-    if missing_prior_codes:
+    if _has_missing(missing_by_category):
         fallback = _resolve_missing_priors_with_gpt(
-            prior_codes=missing_prior_codes,
+            missing_prior_codes_by_category=missing_by_category,
             index=index,
             gpt_client=gpt_client,
         )
@@ -220,84 +237,91 @@ def _resolve(
     return MappingResult(priorCode=prior_code, globalCode=resolution.winner)
 
 
-def _resolve_missing_prior_with_gpt(
-    *,
-    prior_code: str,
-    index: MappingIndex,
-    gpt_client: GPTAdjudicator | None,
-) -> CategoryMappingResponse:
-    """Resolve one missing prior code using category-wise GPT fallback."""
-
-    return _resolve_missing_priors_with_gpt(
-        prior_codes=[prior_code],
-        index=index,
-        gpt_client=gpt_client,
-    )
-
-
 def _resolve_missing_priors_with_gpt(
     *,
-    prior_codes: Sequence[str],
+    missing_prior_codes_by_category: Mapping[PayrollCategory, Sequence[str]],
     index: MappingIndex,
     gpt_client: GPTAdjudicator | None,
 ) -> CategoryMappingResponse:
     """Resolve missing prior codes using GPT against category-specific catalogs only."""
 
-    catalogs = index.all_global_codes_by_category()
+    requested_categories = tuple(
+        category
+        for category in PAYROLL_CATEGORIES
+        if missing_prior_codes_by_category.get(category)
+    )
+    catalogs = {
+        category: tuple(sorted(index.category_indexes[category].all_global_codes))
+        for category in requested_categories
+    }
+    catalog_evidence = {
+        category: index.category_indexes[category].catalog_evidence()
+        for category in requested_categories
+    }
+    missing_pair_count = sum(
+        len(prior_codes)
+        for prior_codes in missing_prior_codes_by_category.values()
+    )
     total_candidates = sum(len(codes) for codes in catalogs.values())
     if total_candidates == 0:
         logger.warning(
             "Missing prior-code fallback has no global-code candidates",
-            extra=log_extra("missing_prior_no_candidates", prior_code_count=len(prior_codes)),
+            extra=log_extra("missing_prior_no_candidates", prior_code_count=missing_pair_count),
         )
-        return _no_match_response(prior_codes)
+        return _no_match_response(missing_prior_codes_by_category)
 
     logger.info(
         "Missing prior-code GPT fallback eligible: priorCodes=%d candidates=%d",
-        len(prior_codes),
+        missing_pair_count,
         total_candidates,
         extra=log_extra(
             "missing_prior_gpt_fallback_eligible",
-            prior_code_count=len(prior_codes),
+            prior_code_count=missing_pair_count,
             candidate_count=total_candidates,
+            categories=[category.value for category in requested_categories],
         ),
     )
 
     if gpt_client is None:
         logger.warning(
             "Missing prior-code GPT fallback unavailable; returning NO_MATCH",
-            extra=log_extra("missing_prior_gpt_unavailable", prior_code_count=len(prior_codes)),
+            extra=log_extra("missing_prior_gpt_unavailable", prior_code_count=missing_pair_count),
         )
-        return _no_match_response(prior_codes)
+        return _no_match_response(missing_prior_codes_by_category)
 
     try:
-        if len(prior_codes) == 1:
-            return gpt_client.recommend_global_code(
-                prior_code=prior_codes[0],
+        if len(requested_categories) == 1 and missing_pair_count == 1:
+            category = requested_categories[0]
+            response = gpt_client.recommend_global_code(
+                prior_code=missing_prior_codes_by_category[category][0],
+                category=category,
                 catalogs=catalogs,
-                catalog_evidence=index.catalog_evidence_by_category(),
+                catalog_evidence=catalog_evidence,
             )
-        return gpt_client.recommend_global_codes(
-            prior_codes=prior_codes,
+            return _complete_fallback_response(response, missing_prior_codes_by_category)
+
+        response = gpt_client.recommend_global_codes(
+            prior_codes_by_category=missing_prior_codes_by_category,
             catalogs=catalogs,
-            catalog_evidence=index.catalog_evidence_by_category(),
+            catalog_evidence=catalog_evidence,
         )
+        return _complete_fallback_response(response, missing_prior_codes_by_category)
     except GPTAdjudicationError as exc:
         logger.warning(
             "Missing prior-code GPT fallback failed: %s",
             exc,
-            extra=log_extra("missing_prior_gpt_failed", prior_code_count=len(prior_codes)),
+            extra=log_extra("missing_prior_gpt_failed", prior_code_count=missing_pair_count),
         )
-        return _no_match_response(prior_codes)
+        return _no_match_response(missing_prior_codes_by_category)
     except Exception:
         logger.exception(
             "Unexpected missing prior-code GPT fallback failure",
             extra=log_extra(
                 "missing_prior_gpt_unexpected_failure",
-                prior_code_count=len(prior_codes),
+                prior_code_count=missing_pair_count,
             ),
         )
-        return _no_match_response(prior_codes)
+        return _no_match_response(missing_prior_codes_by_category)
 
 
 @register_mode_resolver(PrecedenceMode.ONE_TO_ONE)
@@ -508,8 +532,36 @@ def _normalize_prior_code(value: str) -> str:
     return normalized
 
 
+def _normalize_categories(categories: Sequence[PayrollCategory | str]) -> tuple[PayrollCategory, ...]:
+    if not categories:
+        raise MappingError("At least one category must be selected")
+
+    selected: set[PayrollCategory] = set()
+    for category in categories:
+        if isinstance(category, PayrollCategory):
+            selected.add(category)
+            continue
+        try:
+            selected.add(PayrollCategory(str(category).strip()))
+        except ValueError as exc:
+            allowed = [item.value for item in PAYROLL_CATEGORIES]
+            raise MappingError(f"Unsupported category '{category}'. Allowed categories: {allowed}") from exc
+
+    return tuple(category for category in PAYROLL_CATEGORIES if category in selected)
+
+
 def _empty_result_map() -> CategoryResultMap:
     return {category: [] for category in PAYROLL_CATEGORIES}
+
+
+def _empty_missing_map(
+    categories: Sequence[PayrollCategory],
+) -> dict[PayrollCategory, list[str]]:
+    return {category: [] for category in categories}
+
+
+def _has_missing(missing_by_category: Mapping[PayrollCategory, Sequence[str]]) -> bool:
+    return any(missing_by_category.values())
 
 
 def _merge_response(target: CategoryResultMap, response: CategoryMappingResponse) -> None:
@@ -517,12 +569,42 @@ def _merge_response(target: CategoryResultMap, response: CategoryMappingResponse
         target[category].extend(items)
 
 
-def _no_match_response(prior_codes: Sequence[str]) -> CategoryMappingResponse:
+def _complete_fallback_response(
+    response: CategoryMappingResponse,
+    missing_prior_codes_by_category: Mapping[PayrollCategory, Sequence[str]],
+) -> CategoryMappingResponse:
+    response_by_category = response.as_category_map()
+    completed = _empty_result_map()
+
+    for category in PAYROLL_CATEGORIES:
+        expected_prior_codes = [
+            _normalize_prior_code(prior_code)
+            for prior_code in missing_prior_codes_by_category.get(category, ())
+        ]
+        by_prior_code = {
+            result.priorCode: result
+            for result in response_by_category[category]
+            if result.priorCode in expected_prior_codes
+        }
+        completed[category] = [
+            by_prior_code.get(
+                prior_code,
+                MappingResult(priorCode=prior_code, globalCode=NO_MATCH_GLOBAL_CODE),
+            )
+            for prior_code in expected_prior_codes
+        ]
+
+    return CategoryMappingResponse.from_category_map(completed)
+
+
+def _no_match_response(
+    missing_prior_codes_by_category: Mapping[PayrollCategory, Sequence[str]],
+) -> CategoryMappingResponse:
     return CategoryMappingResponse.from_category_map(
         {
             category: [
                 MappingResult(priorCode=prior_code, globalCode=NO_MATCH_GLOBAL_CODE)
-                for prior_code in prior_codes
+                for prior_code in missing_prior_codes_by_category.get(category, ())
             ]
             for category in PAYROLL_CATEGORIES
         }
