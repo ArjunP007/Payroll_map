@@ -1,0 +1,309 @@
+TEST 1 — CATEGORY COLLISION TEST (Most Important)
+Purpose
+
+Verify EDT isolation works.
+
+Dataset
+
+Same prior code exists in all three categories.
+
+{
+  "Earnings": {
+    "ADJUSTMENT": [
+      {
+        "globalCode": "ADJUSTMENT_PAY",
+        "LastModifiedDate": "01/01/2025"
+      }
+    ]
+  },
+
+  "Deductions": {
+    "ADJUSTMENT": [
+      {
+        "globalCode": "DEDUCTION_ADJUSTMENT",
+        "LastModifiedDate": "01/01/2025"
+      }
+    ]
+  },
+
+  "Taxes": {
+    "ADJUSTMENT": [
+      {
+        "globalCode": "TAX_ADJUSTMENT",
+        "LastModifiedDate": "01/01/2025"
+      }
+    ]
+  }
+}
+Swagger
+
+Category Selection:
+
+✓ Earnings
+✓ Deductions
+✓ Taxes
+
+Request:
+
+priorCode = ADJUSTMENT
+mode = MAX_OCCURRENCE
+Expected
+{
+  "Earnings": [
+    {
+      "priorCode": "ADJUSTMENT",
+      "globalCode": "ADJUSTMENT_PAY"
+    }
+  ],
+
+  "Deductions": [
+    {
+      "priorCode": "ADJUSTMENT",
+      "globalCode": "DEDUCTION_ADJUSTMENT"
+    }
+  ],
+
+  "Taxes": [
+    {
+      "priorCode": "ADJUSTMENT",
+      "globalCode": "TAX_ADJUSTMENT"
+    }
+  ]
+}
+What This Verifies
+
+✔ EDT isolation
+
+✔ category-aware search
+
+✔ no cross-category leakage
+
+✔ multi-select dropdown behavior
+
+TEST 2 — PRECEDENCE CONFLICT TEST
+Purpose
+
+Verify mode selection actually changes results.
+
+Dataset
+{
+  "Earnings": {
+    "REGULAR_PAY": [
+
+      {
+        "globalCode": "BASIC",
+        "LastModifiedDate": "01/01/2024"
+      },
+
+      {
+        "globalCode": "BASIC",
+        "LastModifiedDate": "02/01/2024"
+      },
+
+      {
+        "globalCode": "SALARY",
+        "LastModifiedDate": "12/31/2025"
+      }
+
+    ]
+  }
+}
+Test A
+mode = MAX_OCCURRENCE
+
+Expected:
+
+{
+  "globalCode":"BASIC"
+}
+Test B
+mode = LAST_MODIFIED_DATE
+
+Expected:
+
+{
+  "globalCode":"SALARY"
+}
+What This Verifies
+
+✔ dynamic precedence selection
+
+✔ no hardcoded logic
+
+✔ rule engine correctness
+
+TEST 3 — GPT CATEGORY RESTRICTION TEST
+Purpose
+
+Verify GPT only sees selected category catalogs.
+
+Request
+
+Categories:
+
+✓ Earnings
+
+Only.
+
+Request:
+
+REMOTE_HOME_STIPEND
+
+No history exists.
+
+GPT Catalog Provided
+
+Only:
+
+BASIC
+OVERTIME
+REMOTE_ALLOWANCE
+BONUS
+HRA
+
+Must NOT receive:
+
+PF
+HEALTH_INSURANCE
+FEDERAL_TAX
+GST
+Expected
+{
+  "Earnings": [
+    {
+      "priorCode":"REMOTE_HOME_STIPEND",
+      "globalCode":"REMOTE_ALLOWANCE"
+    }
+  ]
+}
+What This Verifies
+
+✔ GPT category scoping
+
+✔ hallucination reduction
+
+✔ EDT-aware inference
+
+✔ manager requirement
+
+TEST 4 — METADATA INTELLIGENCE TEST
+Purpose
+
+Verify GPT uses metadata when available.
+
+Historical Entry
+{
+  "globalCode":"REMOTE_ALLOWANCE",
+
+  "internalDescription":
+  "Monthly allowance provided to remote employees"
+}
+Unknown Prior Code
+WFH_ALLOWANCE
+GPT Inputs
+priorCode:
+WFH_ALLOWANCE
+
+metadata:
+Work From Home Allowance
+
+category:
+Earnings
+Expected
+{
+  "globalCode":"REMOTE_ALLOWANCE"
+}
+Remove Metadata
+
+Run again.
+
+GPT should still attempt inference.
+
+What This Verifies
+
+✔ metadata enrichment
+
+✔ graceful degradation
+
+✔ future-proof design
+
+✔ manager-approved metadata usage
+
+TEST 5 — ENTERPRISE BATCH STRESS TEST
+Purpose
+
+Validate mixed deterministic + GPT execution.
+
+Request
+
+Categories:
+
+✓ Earnings
+✓ Deductions
+✓ Taxes
+
+Batch:
+
+{
+  "mode":"MAX_OCCURRENCE",
+
+  "priorCodes":[
+
+    "BASIC_SALARY",
+
+    "OVERTIME_PAY",
+
+    "PF_DEDUCTION",
+
+    "GST_TAX",
+
+    "REMOTE_HOME_STIPEND",
+
+    "FUTURE_AI_ALLOWANCE",
+
+    "UNKNOWN_TAX_001",
+
+    "UNKNOWN_DEDUCTION_001"
+
+  ]
+}
+
+Assume:
+
+Known:
+
+BASIC_SALARY
+OVERTIME_PAY
+PF_DEDUCTION
+GST_TAX
+
+Unknown:
+
+REMOTE_HOME_STIPEND
+FUTURE_AI_ALLOWANCE
+UNKNOWN_TAX_001
+UNKNOWN_DEDUCTION_001
+Expected
+
+Deterministic mappings:
+
+{
+  "priorCode":"BASIC_SALARY",
+  "globalCode":"BASIC"
+}
+
+etc.
+
+GPT mappings:
+
+{
+  "priorCode":"REMOTE_HOME_STIPEND",
+  "globalCode":"REMOTE_ALLOWANCE"
+}
+
+Low-confidence mappings:
+
+{
+  "priorCode":"UNKNOWN_TAX_001",
+  "globalCode":"NO_MATCH"
+}
