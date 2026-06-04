@@ -77,7 +77,7 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    app_name: str = Field(default="Payroll Mapping Engine")
+    app_name: str = Field(default="Payroll  Code Mapping Engine")
     app_version: str = Field(default="1.0.0")
     environment: RuntimeEnvironment = Field(default=RuntimeEnvironment.DEVELOPMENT)
 
